@@ -25,15 +25,30 @@ async function bootstrapUser(userId: string) {
 	);
 }
 
+function getTrustedOrigins() {
+	const normalizeOrigin = (origin: string) => origin.trim().replace(/\/+$/, "");
+	const configuredOrigins =
+		process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
+			.map(normalizeOrigin)
+			.filter(Boolean) ?? [];
+
+	return Array.from(
+		new Set([
+			"http://localhost:3000",
+			...(process.env.BETTER_AUTH_URL
+				? [normalizeOrigin(process.env.BETTER_AUTH_URL)]
+				: []),
+			...configuredOrigins,
+		]),
+	);
+}
+
 export const auth = betterAuth({
 	database: pool,
 	emailAndPassword: {
 		enabled: true,
 	},
-	trustedOrigins: [
-		"http://localhost:3000",
-		...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL] : []),
-	],
+	trustedOrigins: getTrustedOrigins(),
 	databaseHooks: {
 		user: {
 			create: {
