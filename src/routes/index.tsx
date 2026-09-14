@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { authClient } from "#/lib/auth-client";
+import { getNextPrayerStatus } from "#/lib/prayer-calculation";
+import { getPrayerTrackerData } from "#/lib/prayer-tracker-server";
 import { AccountSection } from "../components/AccountSection";
 import { BottomNavbar } from "../components/BottomNavbar";
 import { HomeSection } from "../components/HomeSection";
@@ -16,6 +19,11 @@ function parseSection(value: unknown): Section | undefined {
 }
 
 export const Route = createFileRoute("/")({
+	loader: async () => {
+		return await getPrayerTrackerData({
+			data: {},
+		});
+	},
 	component: Home,
 	validateSearch: (search: Record<string, unknown>) => ({
 		section: parseSection(search.section),
@@ -24,6 +32,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
 	const { section } = Route.useSearch();
+	const trackerData = Route.useLoaderData();
 	const { data: session } = authClient.useSession();
 	const currentSection: Section = section ?? "home";
 
@@ -35,9 +44,20 @@ function Home() {
 			"https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
 	};
 
+	const nextPrayerInfo = useMemo(() => {
+		if (!trackerData?.schedule) {
+			return { next: "Zhuhur", time: "11 : 39" };
+		}
+		const status = getNextPrayerStatus(trackerData.schedule, new Date());
+		return {
+			next: status.nextPrayer.name,
+			time: status.nextPrayer.time.replace(".", " : "),
+		};
+	}, [trackerData?.schedule]);
+
 	const prayer = {
-		next: "Zhuhur",
-		time: "11 : 39",
+		next: nextPrayerInfo.next,
+		time: nextPrayerInfo.time,
 	};
 
 	const ayah = {
@@ -56,7 +76,7 @@ function Home() {
 	];
 
 	const accountStats = {
-		totalPrayers: 342,
+		totalPrayers: trackerData?.totalPrayers ?? 0,
 		streak: 14,
 		journalEntries: 28,
 	};

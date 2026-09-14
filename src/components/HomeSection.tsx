@@ -23,7 +23,7 @@ interface HomeSectionProps {
 
 const prayerIcons = [
 	{ id: "subuh", icon: CloudSun },
-	{ id: "dzuhur", icon: Sun },
+	{ id: "zhuhur", icon: Sun },
 	{ id: "ashar", icon: Sunrise },
 	{ id: "maghrib", icon: Sunset },
 	{ id: "isya", icon: Moon },
@@ -35,6 +35,8 @@ export function HomeSection({
 	ayah,
 	chartData,
 }: HomeSectionProps) {
+	const nextPrayerLower = prayer.next.toLowerCase();
+
 	return (
 		<div className="w-full pb-32">
 			{/* Avatar & Greeting */}
@@ -61,23 +63,29 @@ export function HomeSection({
 						</div>
 
 						<div className="flex flex-row justify-evenly">
-							{prayerIcons.map(({ id, icon: Icon }, i) => (
-								<div
-									key={id}
-									className={`flex h-12 w-12 items-center justify-center rounded-full ${
-										i === 0
-											? "bg-[#06223a]"
-											: "bg-[#0a1527]/15 shadow-inner shadow-black/25"
-									}`}
-								>
-									<Icon
-										className={`h-6 w-6 ${
-											i === 0 ? "text-primary" : "text-white"
+							{prayerIcons.map(({ id, icon: Icon }) => {
+								const isNext =
+									id === nextPrayerLower ||
+									(id === "zhuhur" && nextPrayerLower === "dzuhur");
+
+								return (
+									<div
+										key={id}
+										className={`flex h-12 w-12 items-center justify-center rounded-full ${
+											isNext
+												? "bg-[#06223a]"
+												: "bg-[#0a1527]/15 shadow-inner shadow-black/25"
 										}`}
-										fill={i === 0 ? "currentColor" : "#ffffff"}
-									/>
-								</div>
-							))}
+									>
+										<Icon
+											className={`h-6 w-6 ${
+												isNext ? "text-primary" : "text-white"
+											}`}
+											fill={isNext ? "currentColor" : "#ffffff"}
+										/>
+									</div>
+								);
+							})}
 						</div>
 						<Link
 							to="/prayer-tracker"

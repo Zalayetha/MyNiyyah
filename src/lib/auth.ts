@@ -1,10 +1,6 @@
 import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { Pool } from "pg";
-
-const pool = new Pool({
-	connectionString: process.env.DATABASE_URL,
-});
+import { pool } from "./db";
 
 async function bootstrapUser(userId: string) {
 	await pool.query(
