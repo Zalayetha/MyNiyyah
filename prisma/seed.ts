@@ -111,7 +111,7 @@ const journalThemes = [
 async function seed() {
 	for (const method of prayerCalculationMethods) {
 		await pool.query(
-			`INSERT INTO "PrayerCalculationMethod" (id, name, description, "fajrAngle", "ishaAngle", "ishaIntervalMinutes", "createdAt", "updatedAt")
+			`INSERT INTO "prayerCalculationMethod" (id, name, description, "fajrAngle", "ishaAngle", "ishaIntervalMinutes", "createdAt", "updatedAt")
 			 VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
 			 ON CONFLICT (id) DO UPDATE SET
 			 name = EXCLUDED.name,
@@ -134,7 +134,7 @@ async function seed() {
 
 	for (const city of cities) {
 		await pool.query(
-			`INSERT INTO "CityCatalog" (id, name, province, country, latitude, longitude, timezone, "timezoneOffset", "createdAt", "updatedAt")
+			`INSERT INTO "cityCatalog" (id, name, province, country, latitude, longitude, timezone, "timezoneOffset", "createdAt", "updatedAt")
 			 VALUES ($1, $2, $3, 'Indonesia', $4, $5, $6, $7, $8, $8)
 			 ON CONFLICT (id) DO UPDATE SET
 			 name = EXCLUDED.name,
@@ -159,7 +159,7 @@ async function seed() {
 
 	for (const theme of journalThemes) {
 		await pool.query(
-			`INSERT INTO "JournalTheme" (id, slug, title, "sortOrder", "createdAt", "updatedAt")
+			`INSERT INTO "journalTheme" (id, slug, title, "sortOrder", "createdAt", "updatedAt")
 			 VALUES ($1, $2, $3, $4, $5, $5)
 			 ON CONFLICT (id) DO UPDATE SET
 			 slug = EXCLUDED.slug,
@@ -172,7 +172,7 @@ async function seed() {
 
 	for (const [categoryIndex, category] of KHAZANAH_CATEGORIES.entries()) {
 		await pool.query(
-			`INSERT INTO "KhazanahCategory" (id, slug, title, subtitle, "sortOrder", "createdAt", "updatedAt")
+			`INSERT INTO "khazanahCategory" (id, slug, title, subtitle, "sortOrder", "createdAt", "updatedAt")
 			 VALUES ($1, $2, $3, $4, $5, $6, $6)
 			 ON CONFLICT (id) DO UPDATE SET
 			 slug = EXCLUDED.slug,
@@ -192,7 +192,7 @@ async function seed() {
 
 		for (const verse of category.verses) {
 			await pool.query(
-				`INSERT INTO "KhazanahVerse" (id, "categoryId", title, "surahName", "surahTranslation", juz, "surahNumber", "verseNumber", arabic, translation, reference, "createdAt", "updatedAt")
+				`INSERT INTO "khazanahVerse" (id, "categoryId", title, "surahName", "surahTranslation", juz, "surahNumber", "verseNumber", arabic, translation, reference, "createdAt", "updatedAt")
 				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $12)
 				 ON CONFLICT (id) DO UPDATE SET
 				 "categoryId" = EXCLUDED."categoryId",
@@ -224,7 +224,7 @@ async function seed() {
 
 			for (const [segmentIndex, segment] of (verse.segments ?? []).entries()) {
 				await pool.query(
-					`INSERT INTO "KhazanahVerseSegment" (id, "verseId", position, text, "createdAt", "updatedAt")
+					`INSERT INTO "khazanahVerseSegment" (id, "verseId", position, text, "createdAt", "updatedAt")
 					 VALUES ($1, $2, $3, $4, $5, $5)
 					 ON CONFLICT ("verseId", position) DO UPDATE SET
 					 text = EXCLUDED.text,
