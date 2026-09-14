@@ -19,7 +19,7 @@ export const HEATMAP_STATUS_LABELS: Record<
 
 export interface HeatmapDayColumn {
 	date: string; // "YYYY-MM-DD"
-	dayLabel: string; // "Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"
+	dayLabel: string; // "Jum", "Sab", "Min", "Sen", "Sel", "Rab", "Kam"
 	dayNumber: string; // "14/9"
 	isToday: boolean;
 }
@@ -51,6 +51,19 @@ export interface HeatmapDataResponse {
 	cells: HeatmapMatrix;
 }
 
+export interface DonutFeelingSegment {
+	label: "Khusyu'" | "Tenang" | "Berat" | "Ngantuk";
+	value: number;
+	color: string;
+}
+
+const FEELING_SEGMENTS: DonutFeelingSegment[] = [
+	{ label: "Khusyu'", value: 0, color: "#47E1CF" },
+	{ label: "Tenang", value: 0, color: "#0B8F8C" },
+	{ label: "Berat", value: 0, color: "#C33C54" },
+	{ label: "Ngantuk", value: 0, color: "#3C1642" },
+];
+
 const INDONESIAN_DAY_ABBRS = [
 	"Min",
 	"Sen",
@@ -61,8 +74,55 @@ const INDONESIAN_DAY_ABBRS = [
 	"Sab",
 ] as const;
 
+function normalizeFeelingText(feeling: string) {
+	return feeling.toLowerCase().trim().replace(/[’']/g, "").replace(/\s+/g, " ");
+}
+
+function getFeelingLabelFromLog(
+	log: PrayerHeatmapLog,
+): DonutFeelingSegment["label"] | null {
+	const score =
+		typeof log.feelingScore === "number"
+			? log.feelingScore
+			: typeof log.khusyuScore === "number"
+				? log.khusyuScore
+				: null;
+
+	if (score === 4) return "Khusyu'";
+	if (score === 3) return "Tenang";
+	if (score === 2) return "Berat";
+	if (score === 1) return "Ngantuk";
+
+	const normalizedFeeling = normalizeFeelingText(log.feeling ?? "");
+	if (normalizedFeeling === "khusyu") return "Khusyu'";
+	if (normalizedFeeling === "tenang") return "Tenang";
+	if (normalizedFeeling === "berat") return "Berat";
+	if (normalizedFeeling === "ngantuk") return "Ngantuk";
+
+	return null;
+}
+
+export function buildFeelingDistribution(
+	logs: PrayerHeatmapLog[],
+): DonutFeelingSegment[] {
+	const counts = new Map<DonutFeelingSegment["label"], number>(
+		FEELING_SEGMENTS.map((segment) => [segment.label, 0]),
+	);
+
+	for (const log of logs) {
+		const label = getFeelingLabelFromLog(log);
+		if (!label) continue;
+		counts.set(label, (counts.get(label) ?? 0) + 1);
+	}
+
+	return FEELING_SEGMENTS.map((segment) => ({
+		...segment,
+		value: counts.get(segment.label) ?? 0,
+	}));
+}
+
 /**
- * Generates an array of HeatmapDayColumns for a rolling N-day window ending on endDateStr.
+ * Generates HeatmapDayColumns for the Friday-start week containing endDateStr.
  */
 export function getHeatmapDayColumns(
 	endDateStr: string,
@@ -72,11 +132,16 @@ export function getHeatmapDayColumns(
 	const todayDate = formatLocalDate(new Date(), timeZone);
 	const [endY, endM, endD] = endDateStr.split("-").map(Number);
 
-	const columns: HeatmapDayColumn[] = [];
+	// Use UTC midday to avoid local DST/midnight shifting.
+	const endUtc = new Date(Date.UTC(endY, endM - 1, endD, 12, 0, 0));
+	const daysSinceFriday = (endUtc.getUTCDay() - 5 + 7) % 7;
+	const startUtc = new Date(endUtc);
+	startUtc.setUTCDate(endUtc.getUTCDate() - daysSinceFriday);
 
-	for (let i = count - 1; i >= 0; i--) {
-		// Use UTC Date construction to avoid local DST/midnight shifting
-		const targetUtc = new Date(Date.UTC(endY, endM - 1, endD - i, 12, 0, 0));
+	const columns: HeatmapDayColumn[] = [];
+	for (let i = 0; i < count; i++) {
+		const targetUtc = new Date(startUtc);
+		targetUtc.setUTCDate(startUtc.getUTCDate() + i);
 		const dateStr = targetUtc.toISOString().split("T")[0];
 
 		const dayOfWeek = targetUtc.getUTCDay();

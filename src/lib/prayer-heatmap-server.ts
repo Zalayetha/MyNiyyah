@@ -6,7 +6,9 @@ import {
 	type DailyPrayerSchedule,
 } from "./prayer-calculation";
 import {
+	buildFeelingDistribution,
 	buildHeatmapMatrix,
+	type DonutFeelingSegment,
 	getHeatmapDayColumns,
 	type HeatmapDataResponse,
 	type PrayerHeatmapLog,
@@ -23,6 +25,8 @@ export interface PrayerHeatmapServerData extends HeatmapDataResponse {
 	timezoneAbbreviation: string;
 	totalPrayersPeriod: number;
 	completedPrayersPeriod: number;
+	feelingDistribution: DonutFeelingSegment[];
+	totalFeelingLogs: number;
 }
 
 const DEFAULT_JAKARTA_PREF = {
@@ -125,6 +129,11 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 
 		const completedCount = logs.filter((l) => l.status === "completed").length;
 		const totalPrayersPeriod = days.length * 5;
+		const feelingDistribution = buildFeelingDistribution(logs);
+		const totalFeelingLogs = feelingDistribution.reduce(
+			(total, segment) => total + segment.value,
+			0,
+		);
 
 		return {
 			...heatmap,
@@ -132,5 +141,7 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 			timezoneAbbreviation: tzAbbr,
 			totalPrayersPeriod,
 			completedPrayersPeriod: completedCount,
+			feelingDistribution,
+			totalFeelingLogs,
 		};
 	});

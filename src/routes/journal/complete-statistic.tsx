@@ -39,14 +39,7 @@ const STATUS_LABELS: { label: string; className: string }[] = [
 
 function RouteComponent() {
 	const heatmapData = Route.useLoaderData();
-
-	// Preserved static mock data for the donut chart (deferred to journaling spec)
-	const weeklyPrayerData = [
-		{ label: "Khusyu", value: 5, color: "#47E1CF" },
-		{ label: "Biasa", value: 7, color: "#0B8F8C" },
-		{ label: "Berat", value: 6, color: "#C33C54" },
-		{ label: "Ngantuk", value: 7, color: "#3C1642" },
-	];
+	const hasFeelingData = heatmapData.totalFeelingLogs > 0;
 
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background pb-24">
@@ -137,19 +130,31 @@ function RouteComponent() {
 				</CardContent>
 			</Card>
 
-			{/* Donut Chart (Preserved for Journaling Feature) */}
 			<Card className="mx-4 mt-4">
 				<CardHeader>
 					<CardTitle>Kualitas Perasaanmu ketika Solat</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<DonutChart
-						className="mx-auto"
-						data={weeklyPrayerData}
-						size={200}
-						strokeWidth={24}
-						showLegend={true}
-					/>
+					{hasFeelingData ? (
+						<DonutChart
+							className="mx-auto"
+							data={heatmapData.feelingDistribution}
+							size={200}
+							strokeWidth={24}
+							showLegend={true}
+							title="Distribusi perasaan sholat"
+						/>
+					) : (
+						<div className="flex min-h-[220px] flex-col items-center justify-center rounded-3xl border border-dashed border-border/50 bg-background/40 px-6 text-center">
+							<p className="font-semibold text-foreground">
+								Belum ada catatan rasa
+							</p>
+							<p className="mt-2 max-w-[260px] text-muted-foreground text-sm leading-relaxed">
+								Simpan jurnal harian setelah Isya untuk melihat distribusi
+								perasaan sholatmu di sini.
+							</p>
+						</div>
+					)}
 				</CardContent>
 			</Card>
 		</div>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { calculateDailyPrayerSchedule } from "./prayer-calculation";
 import {
+	buildFeelingDistribution,
 	buildHeatmapMatrix,
 	evaluateHeatmapCellStatus,
 	getHeatmapDayColumns,
@@ -8,29 +9,159 @@ import {
 } from "./prayer-heatmap";
 
 describe("prayer-heatmap utilities", () => {
+	describe("buildFeelingDistribution", () => {
+		it("aggregates all four feeling score buckets in stable order", () => {
+			const logs: PrayerHeatmapLog[] = [
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "subuh",
+					status: "completed",
+					feelingScore: 4,
+				},
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "zhuhur",
+					status: "completed",
+					feelingScore: 3,
+				},
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "ashar",
+					status: "completed",
+					feelingScore: 2,
+				},
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "maghrib",
+					status: "completed",
+					feelingScore: 1,
+				},
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "isya",
+					status: "completed",
+					feelingScore: 4,
+				},
+			];
+
+			const distribution = buildFeelingDistribution(logs);
+
+			expect(distribution.map((segment) => segment.label)).toEqual([
+				"Khusyu'",
+				"Tenang",
+				"Berat",
+				"Ngantuk",
+			]);
+			expect(distribution.map((segment) => segment.value)).toEqual([
+				2, 1, 1, 1,
+			]);
+		});
+
+		it("falls back to khusyuScore and normalized feeling text", () => {
+			const logs: PrayerHeatmapLog[] = [
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "subuh",
+					status: "completed",
+					khusyuScore: 4,
+				},
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "zhuhur",
+					status: "completed",
+					feeling: "Khusyu'",
+				},
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "ashar",
+					status: "completed",
+					feeling: "tenang",
+				},
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "maghrib",
+					status: "completed",
+					feeling: "berat",
+				},
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "isya",
+					status: "completed",
+					feeling: "ngantuk",
+				},
+			];
+
+			expect(
+				buildFeelingDistribution(logs).map((segment) => segment.value),
+			).toEqual([2, 1, 1, 1]);
+		});
+
+		it("ignores unknown and missing feelings", () => {
+			const logs: PrayerHeatmapLog[] = [
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "subuh",
+					status: "completed",
+					feeling: "unknown",
+				},
+				{ prayerDate: "2026-09-14", prayerName: "zhuhur", status: "completed" },
+				{
+					prayerDate: "2026-09-14",
+					prayerName: "ashar",
+					status: "completed",
+					feelingScore: 3,
+				},
+			];
+
+			expect(
+				buildFeelingDistribution(logs).map((segment) => segment.value),
+			).toEqual([0, 1, 0, 0]);
+		});
+
+		it("returns zero-valued segments when no feelings are recorded", () => {
+			expect(buildFeelingDistribution([])).toEqual([
+				{ label: "Khusyu'", value: 0, color: "#47E1CF" },
+				{ label: "Tenang", value: 0, color: "#0B8F8C" },
+				{ label: "Berat", value: 0, color: "#C33C54" },
+				{ label: "Ngantuk", value: 0, color: "#3C1642" },
+			]);
+		});
+	});
+
 	describe("getHeatmapDayColumns", () => {
-		it("generates 7 rolling consecutive days ending on target date", () => {
+		it("generates the Friday-start week containing the target date", () => {
 			// Monday, September 14, 2026
 			const columns = getHeatmapDayColumns("2026-09-14", 7, "Asia/Jakarta");
 
 			expect(columns).toHaveLength(7);
-			expect(columns[6].date).toBe("2026-09-14");
-			expect(columns[6].dayLabel).toBe("Sen");
-			expect(columns[6].dayNumber).toBe("14/9");
-
-			expect(columns[5].date).toBe("2026-09-13");
-			expect(columns[5].dayLabel).toBe("Min");
-
-			expect(columns[0].date).toBe("2026-09-08");
-			expect(columns[0].dayLabel).toBe("Sel");
+			expect(columns.map((column) => column.dayLabel)).toEqual([
+				"Jum",
+				"Sab",
+				"Min",
+				"Sen",
+				"Sel",
+				"Rab",
+				"Kam",
+			]);
+			expect(columns.map((column) => column.date)).toEqual([
+				"2026-09-11",
+				"2026-09-12",
+				"2026-09-13",
+				"2026-09-14",
+				"2026-09-15",
+				"2026-09-16",
+				"2026-09-17",
+			]);
+			expect(columns[3].dayNumber).toBe("14/9");
 		});
 
 		it("handles month boundary correctly", () => {
 			const columns = getHeatmapDayColumns("2026-03-02", 5, "Asia/Jakarta");
 			expect(columns).toHaveLength(5);
-			expect(columns[4].date).toBe("2026-03-02");
-			expect(columns[3].date).toBe("2026-03-01");
-			expect(columns[2].date).toBe("2026-02-28");
+			expect(columns[0].date).toBe("2026-02-27");
+			expect(columns[1].date).toBe("2026-02-28");
+			expect(columns[2].date).toBe("2026-03-01");
+			expect(columns[3].date).toBe("2026-03-02");
 		});
 	});
 
@@ -236,14 +367,14 @@ describe("prayer-heatmap utilities", () => {
 				expect(row).toHaveLength(7); // 7 days
 			}
 
-			// Subuh on 2026-09-13 (col index 5) should be 0 (Ditunaikan)
-			expect(response.matrix[0][5]).toBe(0);
+			// Subuh on 2026-09-13 (Minggu, col index 2) should be 0 (Ditunaikan)
+			expect(response.matrix[0][2]).toBe(0);
 
-			// Zhuhur on 2026-09-13 (col index 5) should be 2 (Berat)
-			expect(response.matrix[1][5]).toBe(2);
+			// Zhuhur on 2026-09-13 (Minggu, col index 2) should be 2 (Berat)
+			expect(response.matrix[1][2]).toBe(2);
 
-			// Ashar on 2026-09-13 (col index 5) was not completed -> 3 (Tertinggal)
-			expect(response.matrix[2][5]).toBe(3);
+			// Ashar on 2026-09-13 (Minggu, col index 2) was not completed -> 3 (Tertinggal)
+			expect(response.matrix[2][2]).toBe(3);
 		});
 	});
 });
