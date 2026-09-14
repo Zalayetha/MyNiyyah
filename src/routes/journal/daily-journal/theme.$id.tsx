@@ -1,51 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { JournalCard } from "#/components/journal/daily-journal/JournalCard";
+import { getJournalThemeEntries } from "#/lib/journal-server";
 export const Route = createFileRoute("/journal/daily-journal/theme/$id")({
+	loader: async ({ params }) =>
+		await getJournalThemeEntries({ data: { themeId: params.id } }),
 	component: RouteComponent,
 });
-interface JournalData {
-	id: number;
-	title: string;
-	content: string;
-	journalDate: string;
-	totalJournal: number;
-	khusyuPercentage: string;
-	onTimePercentage: string;
+
+function displayJournalDate(date: string) {
+	const [year, month, day] = date.split("-");
+	if (!year || !month || !day) return date;
+	return `${parseInt(day, 10)}/${parseInt(month, 10)}/${year}`;
 }
+
 function RouteComponent() {
-	const journals: JournalData[] = [
-		{
-			id: 1,
-			title: "Menunda Solat Karena Pekerjaan",
-			content:
-				"Saya salah satu pengajar di sekolah dan selalu datang terlambat beberapa menit ketika mengajar di sesi siang. Alasan...",
-			journalDate: "1/11/2025",
-			khusyuPercentage: "80%",
-			onTimePercentage: "60%",
-			totalJournal: 5,
-		},
-		{
-			id: 2,
-			title: "Waktu luang",
-			content:
-				"Waktu luang di saat kerja bagi saya adalah sebuah nikmat yang sering luput saya syukuri. Karena beban pikiran saya berkurang dan...",
-			journalDate: "2/11/2025",
-			khusyuPercentage: "100%",
-			onTimePercentage: "90%",
-			totalJournal: 3,
-		},
-		{
-			id: 3,
-			title: "Gajian",
-			content:
-				"Tanggal gajian. Senyum merekah di seluruh wajah karyawan di kantor, termasuk saya. Motivasi beribadah menjalar di urat nadi...",
-			journalDate: "3/11/2025",
-			khusyuPercentage: "100%",
-			onTimePercentage: "100%",
-			totalJournal: 2,
-		},
-	];
+	const { theme, entries } = Route.useLoaderData();
 
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background pb-24">
@@ -55,21 +25,26 @@ function RouteComponent() {
 				</Link>
 			</div>
 			<div className="p-6 mx-4 mt-2 gradient-primary text-primary-foreground rounded-xl font-medium text-xl">
-				Pekerjaan
+				{theme?.title ?? "Jurnal"}
 			</div>
 
 			<div className="flex flex-col gap-2">
-				{journals.map((journal) => (
+				{entries.map((journal) => (
 					<JournalCard
 						key={journal.id}
 						title={journal.title}
 						content={journal.content}
-						journalDate={journal.journalDate}
-						khusyuPercentage={journal.khusyuPercentage}
-						onTimePercentage={journal.onTimePercentage}
-						totalJournal={journal.totalJournal}
+						journalDate={displayJournalDate(journal.journalDate)}
+						khusyuPercentage={`${journal.khusyuPercentage ?? 0}%`}
+						onTimePercentage={`${journal.punctualityPercentage ?? 0}%`}
+						totalJournal={journal.attachedVerseCount}
 					/>
 				))}
+				{entries.length === 0 && (
+					<p className="mx-4 mt-6 text-muted-foreground text-sm">
+						Belum ada jurnal di kategori ini.
+					</p>
+				)}
 			</div>
 		</div>
 	);

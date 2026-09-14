@@ -1,45 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Plus } from "lucide-react";
 import { CategoryCard } from "#/components/journal/daily-journal/CategoryCard";
+import { getJournalCategoryCounts } from "#/lib/journal-server";
 
 export const Route = createFileRoute("/journal/daily-journal/")({
+	loader: async () => await getJournalCategoryCounts(),
 	component: RouteComponent,
 });
 
-interface Category {
-	slug: string;
-	title: string;
-	count: number;
-	link: string;
-}
-
 function RouteComponent() {
-	const categories: Category[] = [
-		{
-			slug: "pekerjaan",
-			title: "Pekerjaan",
-			count: 11,
-			link: "/journal/daily-journal/theme/1",
-		},
-		{
-			slug: "keluarga",
-			title: "Keluarga",
-			count: 20,
-			link: "/journal/daily-journal/theme/2",
-		},
-		{
-			slug: "kesehatan",
-			title: "Kesehatan",
-			count: 14,
-			link: "/journal/daily-journal/theme/3",
-		},
-		{
-			slug: "teman",
-			title: "Teman",
-			count: 11,
-			link: "/journal/daily-journal/theme/4",
-		},
-	];
+	const categories = Route.useLoaderData();
 
 	return (
 		<div className="relative mx-auto min-h-screen max-w-md bg-background pb-24">
@@ -57,10 +27,10 @@ function RouteComponent() {
 			<div className="grid grid-cols-2 mx-4 mt-8 gap-4">
 				{categories.map((category) => (
 					<CategoryCard
-						key={category.slug}
+						key={category.id}
 						title={category.title}
 						count={category.count}
-						link={category.link}
+						link={`/journal/daily-journal/theme/${category.id}`}
 					/>
 				))}
 			</div>
