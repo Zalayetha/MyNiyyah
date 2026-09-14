@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { BookOpen, CloudSun, Moon, Sun, Sunrise, Sunset } from "lucide-react";
 import { cn } from "#/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Button, buttonVariants } from "./ui/button";
+import { buttonVariants } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 
 interface HomeSectionProps {
@@ -159,17 +159,15 @@ export function HomeSection({
 									<span className="text-card-foreground">{item.day}</span>
 								</div>
 							))}
-            </div>
-            <Link
-              to="/journal/complete-statistic"
-              className={
-                cn(
-                  buttonVariants({ variant: 'default' }),
-                  "w-full bg-primary text-primary-foreground font-semibold mt-4 rounded-full px-4 py-2 hover:bg-primary/90"
-                )
-              }
-            >
-              Lihat Statistik
+						</div>
+						<Link
+							to="/journal/complete-statistic"
+							className={cn(
+								buttonVariants({ variant: "default" }),
+								"w-full bg-primary text-primary-foreground font-semibold mt-4 rounded-full px-4 py-2 hover:bg-primary/90",
+							)}
+						>
+							Lihat Statistik
 						</Link>
 					</CardContent>
 				</Card>

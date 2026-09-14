@@ -12,3 +12,6 @@ dist-ssr
 __unconfig*
 todos.json
 src/generated/
+node_modules/
+dist/
+.ai/

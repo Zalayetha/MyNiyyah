@@ -1,14 +1,257 @@
-generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+// use prisma-next
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     temporal.updatedAt()
 }
 
-datasource db {
-  provider = "postgresql"
-}
-
-model Todo {
-  id        Int      @id @default(autoincrement())
-  title     String
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
   createdAt DateTime @default(now())
+  updatedAt temporal.updatedAt()
+  ipAddress String?
+  userAgent String?
+  userId    String
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             temporal.updatedAt()
+
+  @@index([userId])
+  @@unique([providerId, accountId])
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  temporal.updatedAt()
+
+  @@index([identifier])
+}
+
+model UserProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  phone     String?
+  cityName  String?
+  country   String   @default("Indonesia")
+  bio       String?
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt temporal.updatedAt()
+}
+
+model UserPreference {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  notifyPrayer        Boolean  @default(true)
+  notifyJournal       Boolean  @default(true)
+  vibrateOnPray       Boolean  @default(true)
+  journalReminderTime String   @default("20:00")
+  createdAt           DateTime @default(now())
+  updatedAt           temporal.updatedAt()
+}
+
+model UserLocationPreference {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  cityId              String?
+  cityName            String
+  province            String?
+  country             String   @default("Indonesia")
+  latitude            Float?
+  longitude           Float?
+  timezone            String
+  timezoneOffset      Int
+  calculationMethodId String
+  source              String   @default("manual")
+  createdAt           DateTime @default(now())
+  updatedAt           temporal.updatedAt()
+
+  @@index([calculationMethodId])
+}
+
+model PrayerCalculationMethod {
+  id                  String   @id
+  name                String
+  description         String
+  fajrAngle           Float?
+  ishaAngle           Float?
+  ishaIntervalMinutes Int?
+  createdAt           DateTime @default(now())
+  updatedAt           temporal.updatedAt()
+}
+
+model CityCatalog {
+  id             String   @id
+  name           String
+  province       String
+  country        String   @default("Indonesia")
+  latitude       Float?
+  longitude      Float?
+  timezone       String
+  timezoneOffset Int
+  createdAt      DateTime @default(now())
+  updatedAt      temporal.updatedAt()
+
+  @@index([name])
+  @@index([province])
+}
+
+model PrayerSchedule {
+  id                  String   @id @default(uuid())
+  locationKey         String
+  prayerDate          String
+  prayerName          String
+  scheduledAt         DateTime
+  timezone            String
+  calculationMethodId String
+  createdAt           DateTime @default(now())
+  updatedAt           temporal.updatedAt()
+
+  @@unique([locationKey, prayerDate, prayerName, calculationMethodId])
+  @@index([prayerDate])
+  @@index([calculationMethodId])
+}
+
+model PrayerLog {
+  id           String    @id @default(uuid())
+  userId       String
+  prayerDate   String
+  prayerName   String
+  scheduledAt  DateTime?
+  completedAt  DateTime?
+  status       String    @default("pending")
+  feeling      String?
+  feelingScore Int?
+  khusyuScore  Int?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    temporal.updatedAt()
+
+  @@unique([userId, prayerDate, prayerName])
+  @@index([userId, prayerDate])
+  @@index([userId, status])
+}
+
+model JournalTheme {
+  id        String   @id
+  slug      String   @unique
+  title     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt temporal.updatedAt()
+}
+
+model JournalEntry {
+  id                    String   @id @default(uuid())
+  userId                String
+  journalDate           String
+  themeId               String?
+  title                 String
+  content               String
+  khusyuPercentage      Int?
+  punctualityPercentage Int?
+  createdAt             DateTime @default(now())
+  updatedAt             temporal.updatedAt()
+
+  @@unique([userId, journalDate])
+  @@index([userId, journalDate])
+  @@index([themeId])
+}
+
+model JournalPrayerReflection {
+  id                String    @id @default(uuid())
+  journalEntryId    String
+  prayerLogId       String?
+  prayerName        String
+  adzanAt           DateTime?
+  completedAt       DateTime?
+  differenceMinutes Int?
+  punctuality       String?
+  feeling           String?
+  feelingScore      Int?
+  khusyuScore       Int?
+  createdAt         DateTime  @default(now())
+  updatedAt         temporal.updatedAt()
+
+  @@unique([journalEntryId, prayerName])
+  @@index([prayerLogId])
+}
+
+model KhazanahCategory {
+  id        String   @id
+  slug      String   @unique
+  title     String
+  subtitle  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt temporal.updatedAt()
+}
+
+model KhazanahVerse {
+  id               String   @id
+  categoryId       String
+  title            String
+  surahName        String
+  surahTranslation String
+  juz              Int
+  surahNumber      Int
+  verseNumber      Int
+  arabic           String
+  translation      String
+  reference        String
+  createdAt        DateTime @default(now())
+  updatedAt        temporal.updatedAt()
+
+  @@index([categoryId])
+  @@index([surahNumber, verseNumber])
+}
+
+model KhazanahVerseSegment {
+  id        String   @id @default(uuid())
+  verseId   String
+  position  Int
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt temporal.updatedAt()
+
+  @@unique([verseId, position])
+  @@index([verseId])
+}
+
+model JournalAttachedVerse {
+  id             String   @id @default(uuid())
+  journalEntryId String
+  verseId        String
+  segmentId      String?
+  quoteText      String
+  surahRef       String
+  createdAt      DateTime @default(now())
+
+  @@unique([journalEntryId, verseId, segmentId])
+  @@index([verseId])
 }
