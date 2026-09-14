@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authClient } from "#/lib/auth-client";
 import { AccountSection } from "../components/AccountSection";
 import { BottomNavbar } from "../components/BottomNavbar";
 import { HomeSection } from "../components/HomeSection";
@@ -23,11 +24,14 @@ export const Route = createFileRoute("/")({
 
 function Home() {
 	const { section } = Route.useSearch();
+	const { data: session } = authClient.useSession();
 	const currentSection: Section = section ?? "home";
 
 	const user = {
-		name: "Fulan",
+		name: session?.user.name ?? "User",
+		email: session?.user.email ?? "",
 		avatar:
+			session?.user.image ??
 			"https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
 	};
 

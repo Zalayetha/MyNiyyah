@@ -13,7 +13,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as EditProfileRouteImport } from './routes/edit-profile'
 import { Route as LocationRouteImport } from './routes/location'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrayerTrackerRouteImport } from './routes/prayer-tracker'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as JournalCompleteStatisticRouteImport } from './routes/journal/complete-statistic'
 import { Route as KhazanahIndexRouteImport } from './routes/khazanah/index'
 import { Route as KhazanahCategoryRouteImport } from './routes/khazanah/$category'
@@ -44,9 +46,19 @@ const LocationRoute = LocationRouteImport.update({
   path: '/location',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrayerTrackerRoute = PrayerTrackerRouteImport.update({
   id: '/prayer-tracker',
   path: '/prayer-tracker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JournalCompleteStatisticRoute =
@@ -105,7 +117,9 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/edit-profile': typeof EditProfileRoute
   '/location': typeof LocationRoute
+  '/login': typeof LoginRoute
   '/prayer-tracker': typeof PrayerTrackerRoute
+  '/register': typeof RegisterRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah/': typeof KhazanahIndexRoute
@@ -121,7 +135,9 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/edit-profile': typeof EditProfileRoute
   '/location': typeof LocationRoute
+  '/login': typeof LoginRoute
   '/prayer-tracker': typeof PrayerTrackerRoute
+  '/register': typeof RegisterRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah': typeof KhazanahIndexRoute
@@ -138,7 +154,9 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/edit-profile': typeof EditProfileRoute
   '/location': typeof LocationRoute
+  '/login': typeof LoginRoute
   '/prayer-tracker': typeof PrayerTrackerRoute
+  '/register': typeof RegisterRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah/': typeof KhazanahIndexRoute
@@ -156,7 +174,9 @@ export interface FileRouteTypes {
     | '/about'
     | '/edit-profile'
     | '/location'
+    | '/login'
     | '/prayer-tracker'
+    | '/register'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah/'
@@ -172,7 +192,9 @@ export interface FileRouteTypes {
     | '/about'
     | '/edit-profile'
     | '/location'
+    | '/login'
     | '/prayer-tracker'
+    | '/register'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah'
@@ -188,7 +210,9 @@ export interface FileRouteTypes {
     | '/about'
     | '/edit-profile'
     | '/location'
+    | '/login'
     | '/prayer-tracker'
+    | '/register'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah/'
@@ -205,7 +229,9 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   EditProfileRoute: typeof EditProfileRoute
   LocationRoute: typeof LocationRoute
+  LoginRoute: typeof LoginRoute
   PrayerTrackerRoute: typeof PrayerTrackerRoute
+  RegisterRoute: typeof RegisterRoute
   JournalCompleteStatisticRoute: typeof JournalCompleteStatisticRoute
   KhazanahCategoryRoute: typeof KhazanahCategoryRoute
   KhazanahIndexRoute: typeof KhazanahIndexRoute
@@ -246,11 +272,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LocationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/prayer-tracker': {
       id: '/prayer-tracker'
       path: '/prayer-tracker'
       fullPath: '/prayer-tracker'
       preLoaderRoute: typeof PrayerTrackerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/journal/complete-statistic': {
@@ -338,7 +378,9 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   EditProfileRoute: EditProfileRoute,
   LocationRoute: LocationRoute,
+  LoginRoute: LoginRoute,
   PrayerTrackerRoute: PrayerTrackerRoute,
+  RegisterRoute: RegisterRoute,
   JournalCompleteStatisticRoute: JournalCompleteStatisticRoute,
   KhazanahCategoryRoute: KhazanahCategoryRoute,
   KhazanahIndexRoute: KhazanahIndexRoute,
