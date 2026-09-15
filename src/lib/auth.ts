@@ -2,6 +2,14 @@ import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { pool } from "./db";
 
+function normalizeOrigin(origin: string) {
+	return origin.trim().replace(/\/+$/, "");
+}
+
+function parseOrigins(value: string | undefined) {
+	return value?.split(",").map(normalizeOrigin).filter(Boolean) ?? [];
+}
+
 async function bootstrapUser(userId: string) {
 	await pool.query(
 		`INSERT INTO "userProfile" (id, "userId", country, "createdAt", "updatedAt")
@@ -26,10 +34,6 @@ async function bootstrapUser(userId: string) {
 }
 
 function getTrustedOrigins() {
-	const normalizeOrigin = (origin: string) => origin.trim().replace(/\/+$/, "");
-	const parseOrigins = (value: string | undefined) =>
-		value?.split(",").map(normalizeOrigin).filter(Boolean) ?? [];
-
 	const authUrlOrigins = parseOrigins(process.env.BETTER_AUTH_URL);
 	const configuredOrigins = parseOrigins(
 		process.env.BETTER_AUTH_TRUSTED_ORIGINS,
@@ -40,7 +44,12 @@ function getTrustedOrigins() {
 	);
 }
 
+function getAuthBaseUrl() {
+	return parseOrigins(process.env.BETTER_AUTH_URL)[0];
+}
+
 export const auth = betterAuth({
+	baseURL: getAuthBaseUrl(),
 	database: pool,
 	emailAndPassword: {
 		enabled: true,
