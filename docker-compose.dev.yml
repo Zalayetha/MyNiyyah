@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: myniyyah-postgres-live
+    container_name: myniyyah-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
@@ -20,7 +20,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: myniyyah-pgadmin-live
+    container_name: myniyyah-pgadmin
     restart: unless-stopped
     profiles:
       - tools

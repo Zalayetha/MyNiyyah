@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-      - development
   pull_request:
     branches:
       - main
-      - development
   workflow_dispatch:
 
 permissions:
@@ -44,7 +42,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm prisma generate
+        run: pnpm prisma contract emit
 
       - name: Check formatting and linting
         run: pnpm check
