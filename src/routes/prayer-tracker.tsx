@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
+	AlertCircle,
 	ArrowLeft,
+	CheckCircle2,
+	Clock,
 	CloudSun,
 	type LucideIcon,
 	Moon,
@@ -9,30 +12,50 @@ import {
 	Sunrise,
 	Sunset,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SwipeToPray } from "#/components/SwipeToPray";
+import {
+	getPrayerWindowDetails,
+	type PrayerName,
+} from "#/lib/prayer-calculation";
+import {
+	completePrayerAction,
+	getPrayerTrackerData,
+	type PrayerTrackerData,
+} from "#/lib/prayer-tracker-server";
+import {
+	formatLocalDate,
+	formatLocalTime,
+	getBrowserTimezone,
+	getTimezoneAbbreviation,
+	getTimezoneOffsetHours,
+} from "#/lib/timezone";
 
 export const Route = createFileRoute("/prayer-tracker")({
-	component: RouteComponent,
+	loader: async () => {
+		return await getPrayerTrackerData({
+			data: {},
+		});
+	},
+	component: PrayerTrackerPage,
 });
 
-interface Prayer {
-	id: string;
+interface PrayerMeta {
+	id: PrayerName;
 	name: string;
-	time: string;
 	icon: LucideIcon;
 }
 
-const prayers: Prayer[] = [
-	{ id: "subuh", name: "Subuh", time: "04.35", icon: CloudSun },
-	{ id: "zhuhur", name: "Zhuhur", time: "11.39", icon: Sun },
-	{ id: "asar", name: "Asar", time: "15.01", icon: Sunrise },
-	{ id: "maghrib", name: "Maghrib", time: "17.48", icon: Sunset },
-	{ id: "isya", name: "Isya", time: "19.02", icon: Moon },
+const PRAYER_METAS: PrayerMeta[] = [
+	{ id: "subuh", name: "Subuh", icon: CloudSun },
+	{ id: "zhuhur", name: "Zhuhur", icon: Sun },
+	{ id: "ashar", name: "Ashar", icon: Sunrise },
+	{ id: "maghrib", name: "Maghrib", icon: Sunset },
+	{ id: "isya", name: "Isya", icon: Moon },
 ];
 
 function PrayerHouseProgress({ completedCount }: { completedCount: number }) {
-	const isComplete = completedCount >= prayers.length;
+	const isComplete = completedCount >= PRAYER_METAS.length;
 
 	return (
 		<div className="relative -mt-10 flex flex-col items-center justify-center">
@@ -40,7 +63,7 @@ function PrayerHouseProgress({ completedCount }: { completedCount: number }) {
 				viewBox="0 0 240 220"
 				className="h-80 w-80 overflow-visible"
 				initial={false}
-				aria-label={`Rumah ibadah terbangun ${completedCount} dari ${prayers.length} bagian`}
+				aria-label={`Rumah ibadah terbangun ${completedCount} dari ${PRAYER_METAS.length} bagian`}
 				role="img"
 			>
 				<defs>
@@ -206,122 +229,314 @@ function PrayerHouseProgress({ completedCount }: { completedCount: number }) {
 				</g>
 			</motion.svg>
 
-			<div className="mt-1 text-center text-sm font-medium text-muted-foreground">
+			<div className="mt-1 text-center font-medium text-muted-foreground text-sm">
 				{isComplete
 					? "Rumah ibadah lengkap"
-					: `${completedCount}/${prayers.length} solat selesai`}
+					: `${completedCount}/${PRAYER_METAS.length} solat selesai`}
 			</div>
 		</div>
 	);
 }
 
-function RouteComponent() {
-	const [completedPrayerIds, setCompletedPrayerIds] = useState<Set<string>>(
-		() => new Set(["subuh"]),
-	);
-	const [currentPrayerIndex, setCurrentPrayerIndex] = useState(1);
+function PrayerTrackerPage() {
+	const initialData = Route.useLoaderData();
+	const [data, setData] = useState<PrayerTrackerData>(initialData);
 	const [sliderKey, setSliderKey] = useState(0);
+	const [activeTimezone, setActiveTimezone] = useState(data.timezone);
+	const [currentTime, setCurrentTime] = useState(() =>
+		formatLocalTime(new Date(), data.timezone, "."),
+	);
+	const [now, setNow] = useState(() => new Date());
 
-	const currentPrayer = prayers[currentPrayerIndex];
-	const completedCount = completedPrayerIds.size;
-	const isAllComplete = completedCount >= prayers.length;
+	// Client-side real-time timezone detection
+	useEffect(() => {
+		const clientTz = getBrowserTimezone();
+		if (clientTz && clientTz !== data.timezone) {
+			const clientDate = formatLocalDate(new Date(), clientTz);
+			setActiveTimezone(clientTz);
+			void getPrayerTrackerData({
+				data: {
+					clientTimezone: clientTz,
+					clientLocalDate: clientDate,
+				},
+			}).then((refreshed) => {
+				setData(refreshed);
+			});
+		}
+	}, [data.timezone]);
 
-	const handleUnlock = () => {
-		setCompletedPrayerIds((prev) => {
-			const next = new Set(prev);
-			next.add(currentPrayer.id);
-			return next;
-		});
+	// Real-time ticking clock and interval for prayer time window transitions
+	useEffect(() => {
+		const interval = setInterval(() => {
+			const current = new Date();
+			setNow(current);
+			setCurrentTime(formatLocalTime(current, activeTimezone, "."));
+		}, 1000);
+		return () => clearInterval(interval);
+	}, [activeTimezone]);
 
-		setTimeout(() => {
-			if (currentPrayerIndex < prayers.length - 1) {
-				setCurrentPrayerIndex((prev) => prev + 1);
-				setSliderKey((prev) => prev + 1);
+	// Set of completed prayer names
+	const completedPrayerNames = useMemo(() => {
+		const set = new Set<PrayerName>();
+		for (const [key, value] of Object.entries(data.logs)) {
+			if (value.completed) {
+				set.add(key as PrayerName);
 			}
-		}, 1200);
+		}
+		return set;
+	}, [data.logs]);
+
+	const completedCount = completedPrayerNames.size;
+	const isAllComplete = completedCount >= PRAYER_METAS.length;
+
+	// Calculate contextual window details (completed, active, upcoming, missed)
+	const prayerDetails = useMemo(() => {
+		return getPrayerWindowDetails(data.schedule, completedPrayerNames, now);
+	}, [data.schedule, completedPrayerNames, now]);
+
+	const detailMap = useMemo(() => {
+		return new Map(prayerDetails.map((item) => [item.id, item]));
+	}, [prayerDetails]);
+
+	// Map prayer schedule items by id
+	const scheduleMap = useMemo(() => {
+		const map = new Map<string, string>();
+		for (const item of data.schedule.items) {
+			map.set(item.id, item.time);
+		}
+		return map;
+	}, [data.schedule.items]);
+
+	// Initialize selected prayer to the current active prayer or next upcoming prayer
+	const [selectedPrayerIndex, setSelectedPrayerIndex] = useState(() => {
+		const initialDetails = getPrayerWindowDetails(
+			initialData.schedule,
+			new Set(
+				Object.entries(initialData.logs)
+					.filter(([, v]) => v.completed)
+					.map(([k]) => k as PrayerName),
+			),
+			new Date(),
+		);
+		const activeIdx = initialDetails.findIndex((d) => d.status === "active");
+		if (activeIdx >= 0) return activeIdx;
+		const upcomingIdx = initialDetails.findIndex(
+			(d) => d.status === "upcoming",
+		);
+		if (upcomingIdx >= 0) return upcomingIdx;
+		return 0;
+	});
+
+	const currentPrayerMeta =
+		PRAYER_METAS[selectedPrayerIndex] ?? PRAYER_METAS[0];
+	const currentPrayerTime = scheduleMap.get(currentPrayerMeta.id) ?? "00.00";
+	const currentPrayerDetail =
+		detailMap.get(currentPrayerMeta.id) ?? prayerDetails[0];
+
+	const offsetHours = getTimezoneOffsetHours(now, activeTimezone);
+	const tzAbbr = getTimezoneAbbreviation(activeTimezone, offsetHours);
+
+	// Handle Swipe to Pray unlock with validation
+	const handleUnlock = async () => {
+		const prayerToComplete = currentPrayerMeta.id;
+		const currentStatus = detailMap.get(prayerToComplete);
+
+		if (!currentStatus?.canTrack) {
+			return;
+		}
+
+		// Optimistic UI update
+		setData((prev) => ({
+			...prev,
+			logs: {
+				...prev.logs,
+				[prayerToComplete]: {
+					completed: true,
+					completedAt: new Date().toISOString(),
+					status: "completed",
+				},
+			},
+			completedCount: prev.completedCount + 1,
+		}));
+
+		// Advance to next active or upcoming uncompleted prayer
+		setTimeout(() => {
+			setSelectedPrayerIndex((prevIndex) => {
+				for (let i = prevIndex + 1; i < PRAYER_METAS.length; i++) {
+					const detail = detailMap.get(PRAYER_METAS[i].id);
+					if (detail && detail.status !== "completed") {
+						return i;
+					}
+				}
+				for (let i = 0; i < prevIndex; i++) {
+					const detail = detailMap.get(PRAYER_METAS[i].id);
+					if (detail && detail.status !== "completed") {
+						return i;
+					}
+				}
+				return prevIndex;
+			});
+			setSliderKey((prev) => prev + 1);
+		}, 600);
+
+		// Persist to database via server function
+		try {
+			await completePrayerAction({
+				data: {
+					prayerName: prayerToComplete,
+					prayerDate: data.prayerDate,
+					completedAt: new Date().toISOString(),
+				},
+			});
+		} catch (error) {
+			console.error("Failed to complete prayer log:", error);
+		}
 	};
 
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background">
-			<div className="flex flex-row justify-between p-8">
+			{/* Top Bar */}
+			<div className="flex flex-row items-center justify-between p-8">
 				<Link to="/" search={{ section: undefined }}>
-					<ArrowLeft className="text-foreground size-6" />
+					<ArrowLeft className="size-6 text-foreground" />
 				</Link>
-				<div className="flex flex-col justify-center items-center">
-					<div className="text-3xl text-foreground text-center">
-						{currentPrayer.name}
-					</div>
-					<div className="text-sm text-muted-foreground text-center mt-2">
-						{isAllComplete ? "Semua Solat Selesai" : "Telah Tiba"}
+				<div className="flex flex-col items-center justify-center">
+					<h1 className="text-center font-semibold text-3xl text-foreground">
+						{currentPrayerMeta.name}
+					</h1>
+					<div
+						className={`mt-1 text-center font-medium text-sm ${
+							currentPrayerDetail.status === "completed"
+								? "text-primary"
+								: currentPrayerDetail.status === "missed"
+									? "text-destructive"
+									: currentPrayerDetail.status === "active"
+										? "text-foreground"
+										: "text-muted-foreground"
+						}`}
+					>
+						{isAllComplete
+							? "Semua Solat Selesai"
+							: currentPrayerDetail.statusLabel}
 					</div>
 				</div>
-				<div className="flex justify-center items-center" />
+				<div className="size-6" />
 			</div>
+
+			{/* House Progress Visualizer */}
 			<PrayerHouseProgress completedCount={completedCount} />
-			<div className="flex flex-row gap-4 items-center justify-center mt-4">
-				<div className="flex flex-col gap-1 rounded-4xl px-8 py-4 bg-card">
-					<div className="font-semibold text-2xl text-center text-muted-foreground">
-						11.52
+
+			{/* Time and Timezone Badge */}
+			<div className="mt-4 flex flex-row items-center justify-center gap-4">
+				<div className="flex flex-col items-center gap-1 rounded-4xl bg-card px-8 py-4">
+					<div className="font-semibold text-2xl text-muted-foreground">
+						{currentTime}
 					</div>
-					<div className="font-medium text-md text-center text-muted-foreground">
-						WIB
+					<div className="font-medium text-md text-muted-foreground">
+						{tzAbbr}
 					</div>
 				</div>
-				<div className="flex flex-col gap-1 rounded-4xl px-8 py-4 bg-card ring-1 ring-ring">
-					<div className="font-semibold text-2xl text-center text-foreground">
-						{currentPrayer.time}
+				<div className="flex flex-col items-center gap-1 rounded-4xl bg-card px-8 py-4 ring-1 ring-ring">
+					<div className="font-semibold text-2xl text-foreground">
+						{currentPrayerTime}
 					</div>
-					<div className="font-medium text-md text-center text-foreground">
-						WIB
-					</div>
+					<div className="font-medium text-md text-foreground">{tzAbbr}</div>
 				</div>
 			</div>
 
-			{/*Prayer Information Status*/}
-			<div className="flex flex-row justify-evenly mt-8">
-				{prayers.map(({ id, name, icon: Icon }) => {
-					const isCompletedPrayer = completedPrayerIds.has(id);
-					const isCurrentPrayer = id === currentPrayer.id && !isAllComplete;
+			{/* Prayer Status Pills */}
+			<div className="mt-8 flex flex-row justify-evenly px-4">
+				{PRAYER_METAS.map(({ id, name, icon: Icon }, index) => {
+					const detail = detailMap.get(id);
+					const status = detail?.status ?? "upcoming";
+					const isSelected = index === selectedPrayerIndex;
+
+					let pillClass = "text-muted-foreground hover:text-foreground";
+					if (status === "completed") {
+						pillClass = "bg-primary text-primary-foreground";
+					} else if (status === "active") {
+						pillClass = isSelected
+							? "bg-card text-foreground ring-2 ring-primary"
+							: "bg-card text-foreground ring-1 ring-ring";
+					} else if (status === "missed") {
+						pillClass = isSelected
+							? "bg-destructive/15 text-destructive ring-2 ring-destructive/40"
+							: "bg-destructive/10 text-destructive/80";
+					} else if (isSelected) {
+						pillClass = "bg-card text-foreground ring-1 ring-border";
+					}
 
 					return (
-						<div
+						<button
 							key={id}
-							className="flex flex-col items-center justify-center gap-2"
+							type="button"
+							onClick={() => {
+								setSelectedPrayerIndex(index);
+								setSliderKey((k) => k + 1);
+							}}
+							className="flex flex-col items-center justify-center gap-2 outline-none"
 						>
 							<div
-								className={`flex size-10 items-center justify-center rounded-full transition-colors ${
-									isCompletedPrayer
-										? "bg-primary text-primary-foreground"
-										: isCurrentPrayer
-											? "bg-card text-foreground ring-1 ring-ring"
-											: "text-muted-foreground"
-								}`}
+								className={`flex size-10 items-center justify-center rounded-full transition-all ${pillClass}`}
 							>
 								<Icon className="h-5 w-5" fill="currentColor" />
 							</div>
 							<div
 								className={`text-sm ${
-									isCompletedPrayer || isCurrentPrayer
-										? "text-foreground"
-										: "text-muted-foreground"
+									isSelected
+										? "font-semibold text-foreground"
+										: status === "completed"
+											? "font-medium text-foreground"
+											: status === "missed"
+												? "text-destructive/80"
+												: "text-muted-foreground"
 								}`}
 							>
 								{name}
 							</div>
-						</div>
+						</button>
 					);
 				})}
 			</div>
+
+			{/* Contextual Action Area: SwipeToPray or Status Banners */}
 			{isAllComplete ? (
-				<div className="mx-8 mt-8 rounded-4xl bg-card px-6 py-5 text-center font-semibold text-primary">
-					Alhamdulillah, semua solat hari ini selesai.
+				<div className="mx-8 mt-8 flex items-center justify-center gap-2 rounded-4xl bg-card px-6 py-5 text-center font-semibold text-primary shadow-sm">
+					<CheckCircle2 className="size-5" />
+					<span>Alhamdulillah, semua solat hari ini selesai.</span>
+				</div>
+			) : currentPrayerDetail.status === "completed" ? (
+				<div className="mx-8 mt-8 flex items-center justify-center gap-2 rounded-4xl bg-primary/10 border border-primary/25 px-6 py-5 text-center font-medium text-primary shadow-sm">
+					<CheckCircle2 className="size-5" />
+					<span>Solat {currentPrayerMeta.name} telah ditunaikan.</span>
+				</div>
+			) : currentPrayerDetail.status === "upcoming" ? (
+				<div className="mx-8 mt-8 flex flex-col items-center justify-center rounded-4xl border border-border/40 bg-card/60 px-6 py-5 text-center shadow-sm">
+					<div className="flex items-center gap-2 font-semibold text-foreground text-sm">
+						<Clock className="size-4 text-muted-foreground" />
+						<span>Belum Masuk Waktu</span>
+					</div>
+					<p className="mt-1 text-muted-foreground text-xs">
+						Solat {currentPrayerMeta.name} mulai pukul {currentPrayerTime}{" "}
+						{tzAbbr}.
+					</p>
+				</div>
+			) : currentPrayerDetail.status === "missed" ? (
+				<div className="mx-8 mt-8 flex flex-col items-center justify-center rounded-4xl border border-destructive/30 bg-destructive/10 px-6 py-5 text-center shadow-sm">
+					<div className="flex items-center gap-2 font-semibold text-destructive text-sm">
+						<AlertCircle className="size-4" />
+						<span>Waktu Telah Lewat</span>
+					</div>
+					<p className="mt-1 text-destructive/80 text-xs">
+						Waktu solat {currentPrayerMeta.name} telah berakhir dan terlewat.
+					</p>
 				</div>
 			) : (
 				<SwipeToPray
 					key={sliderKey}
 					onUnlock={handleUnlock}
 					className="m-8"
-					text={`Geser selesai ${currentPrayer.name}`}
+					text={`Geser selesai ${currentPrayerMeta.name}`}
 				/>
 			)}
 		</div>

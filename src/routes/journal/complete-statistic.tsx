@@ -2,12 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, CloudSun, Moon, Sun, Sunrise, Sunset } from "lucide-react";
 import { DonutChart } from "#/components/DonutChart";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { getPrayerHeatmapData } from "#/lib/prayer-heatmap-server";
 
 export const Route = createFileRoute("/journal/complete-statistic")({
+	loader: async () => {
+		return await getPrayerHeatmapData({
+			data: {},
+		});
+	},
 	component: RouteComponent,
 });
-
-const DAYS = ["Jum", "Sab", "Min", "Sen", "Sel", "Rab", "Kam"] as const;
 
 const PRAYERS = [
 	{ icon: CloudSun, label: "Subuh" },
@@ -33,49 +37,44 @@ const STATUS_LABELS: { label: string; className: string }[] = [
 	{ label: "Tertinggal", className: "bg-cyan-900" },
 ];
 
-// 0 = on time (bg-primary), 1 = late (bg-lime-200), 2 = struggled (bg-orange-300), 3 = missed (bg-cyan-900)
-const PRAYER_STATUS: Status[][] = [
-	[0, 0, 2, 1, 3, 3, 3], // Subuh
-	[0, 0, 1, 3, 3, 2, 3], // Zhuhur
-	[3, 0, 1, 0, 3, 2, 3], // Ashar
-	[3, 0, 0, 3, 2, 3, 1], // Maghrib
-	[0, 0, 0, 0, 2, 3, 1], // Isya
-];
-
 function RouteComponent() {
-	const weeklyPrayerData = [
-		{ label: "Khusyu", value: 5, color: "#47E1CF" },
-		{ label: "Biasa", value: 7, color: "#0B8F8C" },
-		{ label: "Berat", value: 6, color: "#C33C54" },
-		{ label: "Ngantuk", value: 7, color: "#3C1642" },
-	];
+	const heatmapData = Route.useLoaderData();
+	const hasFeelingData = heatmapData.totalFeelingLogs > 0;
 
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background pb-24">
 			<div className="flex flex-row justify-between px-4 py-8">
-				<Link to="/" search={{ section: undefined }}>
-					<ArrowLeft className="text-foreground size-6" />
+				<Link to="/" search={{ section: "journal" }}>
+					<ArrowLeft className="size-6 text-foreground" />
 				</Link>
 			</div>
-			<div className="text-3xl text-foreground font-medium text-center">
+			<div className="text-center font-medium text-3xl text-foreground">
 				Statistik Lengkap
 			</div>
 
+			{/* Prayer Heatmap Matrix */}
 			<Card className="mx-4 mt-8">
-				<CardHeader>
-					<CardTitle>Statistik Solat Harian</CardTitle>
-				</CardHeader>
 				<CardContent className="px-0">
 					<table className="w-full border-collapse">
 						<thead>
 							<tr>
 								<th className="w-14" />
-								{DAYS.map((day) => (
-									<th
-										key={day}
-										className="text-foreground font-medium text-xs pb-3 text-center"
-									>
-										{day}
+								{heatmapData.days.map((day) => (
+									<th key={day.date} className="pb-3 text-center">
+										<div className="flex flex-col items-center">
+											<span
+												className={`text-xs ${
+													day.isToday
+														? "font-semibold text-primary"
+														: "font-medium text-foreground"
+												}`}
+											>
+												{day.dayLabel}
+											</span>
+											<span className="text-[10px] text-muted-foreground">
+												{day.dayNumber}
+											</span>
+										</div>
 									</th>
 								))}
 							</tr>
@@ -86,19 +85,31 @@ function RouteComponent() {
 									<td className="pb-3 pr-2">
 										<div className="flex flex-col items-center gap-1">
 											<prayer.icon className="h-5 w-5 text-foreground" />
-											<span className="text-foreground text-[10px] font-medium leading-tight text-center">
+											<span className="text-center font-medium text-[10px] text-foreground leading-tight">
 												{prayer.label}
 											</span>
 										</div>
 									</td>
-									{PRAYER_STATUS[rowIdx].map((status, colIdx) => (
+									{heatmapData.matrix[rowIdx].map((status, colIdx) => (
 										<td
-											key={`${prayer.label}-${DAYS[colIdx]}`}
+											key={`${prayer.label}-${heatmapData.days[colIdx].date}`}
 											className="pb-3 text-center"
 										>
-											<div
-												className={`mx-auto h-8 w-8 rounded-xl ${STATUS_CLASS[status]}`}
-											/>
+											{status !== null ? (
+												<div
+													className={`mx-auto h-8 w-8 rounded-xl ${STATUS_CLASS[status]}`}
+													title={`${prayer.label} ${heatmapData.days[colIdx].dayLabel}: ${
+														STATUS_LABELS.find(
+															(s) => s.className === STATUS_CLASS[status],
+														)?.label ?? ""
+													}`}
+												/>
+											) : (
+												<div
+													className="mx-auto h-8 w-8 rounded-xl border border-border/40 border-dashed bg-card/40"
+													title={`${prayer.label} ${heatmapData.days[colIdx].dayLabel}: Belum Tiba`}
+												/>
+											)}
 										</td>
 									))}
 								</tr>
@@ -124,13 +135,26 @@ function RouteComponent() {
 					<CardTitle>Kualitas Perasaanmu ketika Solat</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<DonutChart
-						className="mx-auto"
-						data={weeklyPrayerData}
-						size={200}
-						strokeWidth={24}
-						showLegend={true}
-					/>
+					{hasFeelingData ? (
+						<DonutChart
+							className="mx-auto"
+							data={heatmapData.feelingDistribution}
+							size={200}
+							strokeWidth={24}
+							showLegend={true}
+							title="Distribusi perasaan sholat"
+						/>
+					) : (
+						<div className="flex min-h-[220px] flex-col items-center justify-center rounded-3xl border border-dashed border-border/50 bg-background/40 px-6 text-center">
+							<p className="font-semibold text-foreground">
+								Belum ada catatan rasa
+							</p>
+							<p className="mt-2 max-w-[260px] text-muted-foreground text-sm leading-relaxed">
+								Simpan jurnal harian setelah Isya untuk melihat distribusi
+								perasaan sholatmu di sini.
+							</p>
+						</div>
+					)}
 				</CardContent>
 			</Card>
 		</div>

@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { BookOpen, CloudSun, Moon, Sun, Sunrise, Sunset } from "lucide-react";
+import { cn } from "#/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Button } from "./ui/button";
+import { buttonVariants } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 
 interface HomeSectionProps {
@@ -17,12 +18,18 @@ interface HomeSectionProps {
 		text: string;
 		source: string;
 	};
-	chartData: Array<{ day: string; value: number }>;
+	chartData: Array<{
+		day: string;
+		value: number;
+		date: string;
+		completedPrayers: number;
+		isToday: boolean;
+	}>;
 }
 
 const prayerIcons = [
 	{ id: "subuh", icon: CloudSun },
-	{ id: "dzuhur", icon: Sun },
+	{ id: "zhuhur", icon: Sun },
 	{ id: "ashar", icon: Sunrise },
 	{ id: "maghrib", icon: Sunset },
 	{ id: "isya", icon: Moon },
@@ -34,6 +41,8 @@ export function HomeSection({
 	ayah,
 	chartData,
 }: HomeSectionProps) {
+	const nextPrayerLower = prayer.next.toLowerCase();
+
 	return (
 		<div className="w-full pb-32">
 			{/* Avatar & Greeting */}
@@ -60,37 +69,39 @@ export function HomeSection({
 						</div>
 
 						<div className="flex flex-row justify-evenly">
-							{prayerIcons.map(({ id, icon: Icon }, i) => (
-								<div
-									key={id}
-									className={`flex h-12 w-12 items-center justify-center rounded-full ${
-										i === 0
-											? "bg-[#06223a]"
-											: "bg-[#0a1527]/15 shadow-inner shadow-black/25"
-									}`}
-								>
-									<Icon
-										className={`h-6 w-6 ${
-											i === 0 ? "text-primary" : "text-white"
-										}`}
-										fill={i === 0 ? "currentColor" : "#ffffff"}
-									/>
-								</div>
-							))}
-						</div>
+							{prayerIcons.map(({ id, icon: Icon }) => {
+								const isNext =
+									id === nextPrayerLower ||
+									(id === "zhuhur" && nextPrayerLower === "dzuhur");
 
-						<Button
-							render={<Link to="/prayer-tracker" />}
-							className="w-full bg-background font-semibold text-primary hover:bg-background/90 mt-4 rounded-full px-4 py-2"
-							onClick={() => {
-								if ("vibrate" in navigator) {
-									navigator.vibrate(10);
-								}
-								console.log("Catat Solat");
-							}}
+								return (
+									<div
+										key={id}
+										className={`flex h-12 w-12 items-center justify-center rounded-full ${
+											isNext
+												? "bg-[#06223a]"
+												: "bg-[#0a1527]/15 shadow-inner shadow-black/25"
+										}`}
+									>
+										<Icon
+											className={`h-6 w-6 ${
+												isNext ? "text-primary" : "text-white"
+											}`}
+											fill={isNext ? "currentColor" : "#ffffff"}
+										/>
+									</div>
+								);
+							})}
+						</div>
+						<Link
+							to="/prayer-tracker"
+							className={cn(
+								buttonVariants({ variant: "default" }),
+								"w-full bg-background font-semibold text-primary hover:bg-background/90 mt-4 rounded-full px-4 py-2",
+							)}
 						>
 							Catat Solat
-						</Button>
+						</Link>
 					</CardContent>
 				</Card>
 			</div>
@@ -125,7 +136,7 @@ export function HomeSection({
 									stroke="url(#cyan-gradient)"
 									fill="url(#cyan-gradient)"
 								/>
-								<div className="text-xs font-medium bg-gradient-to-r from-[#02bda7] via-[#53d7c8] to-[#a7fff5] bg-clip-text text-transparent">
+								<div className="text-xs font-medium bg-linear-to-r from-[#02bda7] via-[#53d7c8] to-[#a7fff5] bg-clip-text text-transparent">
 									{ayah.source}
 								</div>
 							</div>
@@ -150,31 +161,38 @@ export function HomeSection({
 						<div className="flex justify-between">
 							{chartData.map((item) => (
 								<div
-									key={item.day}
+									key={item.date}
 									className="flex flex-col items-center gap-3"
 								>
-									<div className="h-32 w-6 bg-muted rounded-full flex items-end p-1">
+									<div
+										className="h-32 w-6 bg-muted rounded-full flex items-end p-1"
+										title={`${item.completedPrayers}/5 solat ditunaikan pada ${item.date}`}
+									>
 										<div
 											className="w-full rounded-full bg-primary"
 											style={{ height: `${item.value}%` }}
 										/>
 									</div>
-									<span className="text-card-foreground">{item.day}</span>
+									<span
+										className={cn(
+											"text-card-foreground",
+											item.isToday && "font-semibold text-primary",
+										)}
+									>
+										{item.day}
+									</span>
 								</div>
 							))}
 						</div>
-						<Button
-							render={<Link to="/journal/complete-statistic" />}
-							className="w-full bg-primary text-primary-foreground font-semibold mt-4 rounded-full px-4 py-2 hover:bg-primary/90"
-							onClick={() => {
-								if ("vibrate" in navigator) {
-									navigator.vibrate(10);
-								}
-								console.log("Lihat Statistik");
-							}}
+						<Link
+							to="/journal/complete-statistic"
+							className={cn(
+								buttonVariants({ variant: "default" }),
+								"w-full bg-primary text-primary-foreground font-semibold mt-4 rounded-full px-4 py-2 hover:bg-primary/90",
+							)}
 						>
 							Lihat Statistik
-						</Button>
+						</Link>
 					</CardContent>
 				</Card>
 			</div>

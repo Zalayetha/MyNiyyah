@@ -9,7 +9,7 @@ import {
 	Shield,
 	Sparkles,
 } from "lucide-react";
-import { Button } from "#/components/ui/button";
+import { buttonVariants } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 
 export const Route = createFileRoute("/about")({
@@ -172,14 +172,16 @@ function AboutPage() {
 				</Card>
 
 				{/* Back to Account CTA */}
-				<Button
-					render={<Link to="/" search={{ section: "account" }} />}
-					type="button"
-					variant="secondary"
-					className="w-full font-semibold rounded-full py-3"
+				<Link
+					to="/"
+					search={{ section: "account" }}
+					className={buttonVariants({
+						variant: "secondary",
+						className: "w-full font-semibold rounded-full py-3",
+					})}
 				>
 					Kembali ke Akun
-				</Button>
+				</Link>
 
 				{/* Footer */}
 				<div className="text-center text-xs text-muted-foreground pt-2">

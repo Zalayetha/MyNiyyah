@@ -11,7 +11,7 @@ import {
 	User,
 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "#/components/ui/button";
+import { Button, buttonVariants } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
 
 export const Route = createFileRoute("/edit-profile")({
@@ -283,14 +283,17 @@ function EditProfilePage() {
 						)}
 					</Button>
 
-					<Button
-						render={<Link to="/" search={{ section: "account" }} />}
-						type="button"
-						variant="ghost"
-						className="w-full text-muted-foreground font-medium rounded-full"
+					<Link
+						to="/"
+						search={{ section: "account" }}
+						className={buttonVariants({
+							variant: "ghost",
+							className:
+								"w-full text-muted-foreground font-medium rounded-full",
+						})}
 					>
 						Batal
-					</Button>
+					</Link>
 				</div>
 			</form>
 		</div>

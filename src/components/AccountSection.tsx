@@ -1,6 +1,7 @@
 import { Icon } from "@iconify/react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { twMerge } from "tailwind-merge";
+import { authClient } from "#/lib/auth-client";
 
 interface SettingItemProps {
 	icon: string;
@@ -59,6 +60,7 @@ function SettingItem({
 interface AccountSectionProps {
 	user: {
 		name: string;
+		email: string;
 		avatar: string;
 	};
 	stats: {
@@ -69,6 +71,8 @@ interface AccountSectionProps {
 }
 
 export function AccountSection({ user, stats }: AccountSectionProps) {
+	const navigate = useNavigate();
+
 	return (
 		<div className="w-full pb-32">
 			{/*Header*/}
@@ -91,7 +95,7 @@ export function AccountSection({ user, stats }: AccountSectionProps) {
 						<div className="text-foreground font-semibold text-lg">
 							{user.name}
 						</div>
-						<div className="text-muted-foreground text-sm">fulan@jobs.com</div>
+						<div className="text-muted-foreground text-sm">{user.email}</div>
 					</div>
 					<button
 						className="ml-auto p-2 rounded-lg hover:bg-muted"
@@ -167,9 +171,10 @@ export function AccountSection({ user, stats }: AccountSectionProps) {
 				<button
 					type="button"
 					className="w-full p-4 bg-destructive/10 border border-destructive/50 rounded-xl flex items-center justify-center gap-2 transition-all duration-150 active:scale-95 hover:bg-destructive/20"
-					onClick={() => {
+					onClick={async () => {
 						if ("vibrate" in navigator) navigator.vibrate(10);
-						console.log("Logout");
+						await authClient.signOut();
+						await navigate({ to: "/login" });
 					}}
 				>
 					<Icon icon="ph:sign-out" className="text-destructive" fontSize={20} />

@@ -86,31 +86,32 @@ pnpm install
 Create your local environment file:
 
 ```bash
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 Generate a secure authentication secret:
 
 ```bash
-# Set BETTER_AUTH_SECRET in .env.local
+# Set BETTER_AUTH_SECRET in .env
 pnpm dlx @better-auth/cli secret
 ```
 
-Configure your `.env.local`:
+Configure your `.env`:
 
 ```env
-DATABASE_URL="postgresql://user:password@localhost:5432/myniyyah?schema=public"
+DATABASE_URL="postgresql://myniyyah:replace-with-postgres-password@localhost:5432/myniyyah"
 BETTER_AUTH_SECRET="your-generated-secret"
 BETTER_AUTH_URL="http://localhost:3000"
 ```
 
 ### 3. Database Setup (Optional)
 
-Generate the Prisma client and run migrations:
+Generate the Prisma contract and initialize or update the database:
 
 ```bash
-pnpm db:generate
-pnpm db:push
+pnpm contract:emit
+pnpm db:init # fresh database
+pnpm db:update # existing database
 ```
 
 ### 4. Run Development Server
