@@ -18,7 +18,13 @@ interface HomeSectionProps {
 		text: string;
 		source: string;
 	};
-	chartData: Array<{ day: string; value: number }>;
+	chartData: Array<{
+		day: string;
+		value: number;
+		date: string;
+		completedPrayers: number;
+		isToday: boolean;
+	}>;
 }
 
 const prayerIcons = [
@@ -155,16 +161,26 @@ export function HomeSection({
 						<div className="flex justify-between">
 							{chartData.map((item) => (
 								<div
-									key={item.day}
+									key={item.date}
 									className="flex flex-col items-center gap-3"
 								>
-									<div className="h-32 w-6 bg-muted rounded-full flex items-end p-1">
+									<div
+										className="h-32 w-6 bg-muted rounded-full flex items-end p-1"
+										title={`${item.completedPrayers}/5 solat ditunaikan pada ${item.date}`}
+									>
 										<div
 											className="w-full rounded-full bg-primary"
 											style={{ height: `${item.value}%` }}
 										/>
 									</div>
-									<span className="text-card-foreground">{item.day}</span>
+									<span
+										className={cn(
+											"text-card-foreground",
+											item.isToday && "font-semibold text-primary",
+										)}
+									>
+										{item.day}
+									</span>
 								</div>
 							))}
 						</div>

@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { authClient } from "#/lib/auth-client";
 import { getNextPrayerStatus } from "#/lib/prayer-calculation";
+import { getPrayerHeatmapData } from "#/lib/prayer-heatmap-server";
 import { getPrayerTrackerData } from "#/lib/prayer-tracker-server";
 import { AccountSection } from "../components/AccountSection";
 import { BottomNavbar } from "../components/BottomNavbar";
@@ -20,9 +21,16 @@ function parseSection(value: unknown): Section | undefined {
 
 export const Route = createFileRoute("/")({
 	loader: async () => {
-		return await getPrayerTrackerData({
-			data: {},
-		});
+		const [trackerData, heatmapData] = await Promise.all([
+			getPrayerTrackerData({
+				data: {},
+			}),
+			getPrayerHeatmapData({
+				data: {},
+			}),
+		]);
+
+		return { trackerData, heatmapData };
 	},
 	component: Home,
 	validateSearch: (search: Record<string, unknown>) => ({
@@ -32,7 +40,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
 	const { section } = Route.useSearch();
-	const trackerData = Route.useLoaderData();
+	const { trackerData, heatmapData } = Route.useLoaderData();
 	const { data: session } = authClient.useSession();
 	const currentSection: Section = section ?? "home";
 
@@ -65,15 +73,22 @@ function Home() {
 		source: "Q.S Al-Ankabut: 45",
 	};
 
-	const chartData = [
-		{ day: "Sab", value: 25 },
-		{ day: "Min", value: 40 },
-		{ day: "Sen", value: 70 },
-		{ day: "Sel", value: 25 },
-		{ day: "Rab", value: 70 },
-		{ day: "Kam", value: 90 },
-		{ day: "Jum", value: 90 },
-	];
+	const chartData = useMemo(() => {
+		return heatmapData.days.map((day, columnIndex) => {
+			const completedPrayers = heatmapData.matrix.reduce((total, row) => {
+				const status = row[columnIndex];
+				return status === 0 || status === 1 || status === 2 ? total + 1 : total;
+			}, 0);
+
+			return {
+				day: day.dayLabel,
+				value: (completedPrayers / 5) * 100,
+				date: day.date,
+				completedPrayers,
+				isToday: day.isToday,
+			};
+		});
+	}, [heatmapData.days, heatmapData.matrix]);
 
 	const accountStats = {
 		totalPrayers: trackerData?.totalPrayers ?? 0,
