@@ -27,19 +27,16 @@ async function bootstrapUser(userId: string) {
 
 function getTrustedOrigins() {
 	const normalizeOrigin = (origin: string) => origin.trim().replace(/\/+$/, "");
-	const configuredOrigins =
-		process.env.BETTER_AUTH_TRUSTED_ORIGINS?.split(",")
-			.map(normalizeOrigin)
-			.filter(Boolean) ?? [];
+	const parseOrigins = (value: string | undefined) =>
+		value?.split(",").map(normalizeOrigin).filter(Boolean) ?? [];
+
+	const authUrlOrigins = parseOrigins(process.env.BETTER_AUTH_URL);
+	const configuredOrigins = parseOrigins(
+		process.env.BETTER_AUTH_TRUSTED_ORIGINS,
+	);
 
 	return Array.from(
-		new Set([
-			"http://localhost:3000",
-			...(process.env.BETTER_AUTH_URL
-				? [normalizeOrigin(process.env.BETTER_AUTH_URL)]
-				: []),
-			...configuredOrigins,
-		]),
+		new Set(["http://localhost:3000", ...authUrlOrigins, ...configuredOrigins]),
 	);
 }
 
