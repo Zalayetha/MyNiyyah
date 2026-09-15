@@ -1,7 +1,9 @@
+name: myniyyah_dev
+
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: myniyyah-postgres
+    container_name: myniyyah-postgres-dev
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .env}
@@ -10,7 +12,7 @@ services:
     ports:
       - "55432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-dev-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:?Set POSTGRES_USER in .env} -d ${POSTGRES_DB:?Set POSTGRES_DB in .env}"]
       interval: 10s
@@ -20,7 +22,7 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: myniyyah-pgadmin
+    container_name: myniyyah-pgadmin-dev
     restart: unless-stopped
     profiles:
       - tools
@@ -32,11 +34,11 @@ services:
     ports:
       - "55050:80"
     volumes:
-      - pgadmin-data:/var/lib/pgadmin
+      - pgadmin-dev-data:/var/lib/pgadmin
     depends_on:
       postgres:
         condition: service_healthy
 
 volumes:
-  postgres-data:
-  pgadmin-data:
+  postgres-dev-data:
+  pgadmin-dev-data:
