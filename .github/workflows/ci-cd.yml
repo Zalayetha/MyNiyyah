@@ -63,3 +63,19 @@ jobs:
     steps:
       - name: Log deployment placeholder
         run: echo "CD placeholder — deployment would run for commit $GITHUB_SHA"
+      # - name: SSH to server and run script
+      #   uses: appleboy/ssh-action@v1
+      #   with:
+      #     host: ${{ secrets.SSH_HOST }}
+      #     username: ${{ secrets.SSH_USERNAME }}
+      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
+      #     port: ${{ secrets.SSH_PORT }}
+      #     script: |
+      #       set -e
+      #       export PATH="/root/.nvm/versions/node/v24.18.0/bin:$PATH"
+      #       cd /root/live/MyNiyyah
+      #       git fetch origin main
+      #       git reset --hard origin/main
+      #       npm ci
+      #       npm run build
+      #       pm2 restart entrosync
