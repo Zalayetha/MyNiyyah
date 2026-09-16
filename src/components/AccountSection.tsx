@@ -23,13 +23,18 @@ function SettingItem({
 	const content = (
 		<div
 			className={twMerge(
-				"flex flex-row items-center justify-between w-full p-4 bg-muted/50 rounded-xl hover:bg-muted transition-colors cursor-pointer",
+				"flex min-h-14 w-full flex-row items-center justify-between rounded-xl bg-muted/50 p-4 transition-colors hover:bg-muted",
 				className,
 			)}
 		>
 			<div className="flex flex-row items-center gap-3">
 				<div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted">
-					<Icon icon={icon} className="text-muted-foreground" fontSize={20} />
+					<Icon
+						aria-hidden="true"
+						icon={icon}
+						className="text-muted-foreground"
+						fontSize={20}
+					/>
 				</div>
 				<span className="text-foreground">{label}</span>
 			</div>
@@ -38,6 +43,7 @@ function SettingItem({
 					<span className="text-muted-foreground text-sm">{value}</span>
 				)}
 				<Icon
+					aria-hidden="true"
 					icon="ph:caret-right"
 					className="text-muted-foreground"
 					fontSize={16}
@@ -47,11 +53,22 @@ function SettingItem({
 	);
 
 	if (link) {
-		return <Link to={link}>{content}</Link>;
+		return (
+			<Link
+				to={link}
+				className="block rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+			>
+				{content}
+			</Link>
+		);
 	}
 
 	return (
-		<button type="button" onClick={onClick} className="w-full text-left">
+		<button
+			type="button"
+			onClick={onClick}
+			className="w-full rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+		>
 			{content}
 		</button>
 	);
@@ -84,31 +101,28 @@ export function AccountSection({ user, stats }: AccountSectionProps) {
 			</div>
 
 			{/*Profile Card*/}
-			<Link to="/edit-profile">
-				<div className="mx-8 mt-6 p-4 bg-card rounded-xl flex flex-row items-center gap-4 hover:bg-card/80 transition-colors cursor-pointer">
-					<img
-						src={user.avatar}
-						alt=""
-						className="size-16 rounded-full ring-2 ring-ring"
-					/>
-					<div className="flex flex-col">
-						<div className="text-foreground font-semibold text-lg">
-							{user.name}
-						</div>
-						<div className="text-muted-foreground text-sm">{user.email}</div>
+			<Link
+				to="/edit-profile"
+				aria-label={`Edit profil ${user.name}`}
+				className="mx-8 mt-6 flex min-h-24 flex-row items-center gap-4 rounded-xl bg-card p-4 transition-colors hover:bg-card/80 outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+			>
+				<img
+					src={user.avatar}
+					alt={`Foto profil ${user.name}`}
+					className="size-16 rounded-full ring-2 ring-ring"
+				/>
+				<div className="flex flex-col">
+					<div className="text-foreground font-semibold text-lg">
+						{user.name}
 					</div>
-					<button
-						className="ml-auto p-2 rounded-lg hover:bg-muted"
-						type="button"
-						aria-label="Edit Profile"
-					>
-						<Icon
-							icon="ph:pencil-simple"
-							className="text-muted-foreground"
-							fontSize={20}
-						/>
-					</button>
+					<div className="text-muted-foreground text-sm">{user.email}</div>
 				</div>
+				<span
+					className="ml-auto flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground"
+					aria-hidden="true"
+				>
+					<Icon icon="ph:pencil-simple" fontSize={20} />
+				</span>
 			</Link>
 
 			{/*Stats Summary*/}
@@ -170,14 +184,19 @@ export function AccountSection({ user, stats }: AccountSectionProps) {
 			<div className="mx-8 mt-8">
 				<button
 					type="button"
-					className="w-full p-4 bg-destructive/10 border border-destructive/50 rounded-xl flex items-center justify-center gap-2 transition-all duration-150 active:scale-95 hover:bg-destructive/20"
+					className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-destructive/50 bg-destructive/10 p-4 transition-colors hover:bg-destructive/20 outline-none focus-visible:ring-2 focus-visible:ring-destructive/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
 					onClick={async () => {
 						if ("vibrate" in navigator) navigator.vibrate(10);
 						await authClient.signOut();
 						await navigate({ to: "/login" });
 					}}
 				>
-					<Icon icon="ph:sign-out" className="text-destructive" fontSize={20} />
+					<Icon
+						aria-hidden="true"
+						icon="ph:sign-out"
+						className="text-destructive"
+						fontSize={20}
+					/>
 					<span className="text-destructive font-medium">Keluar</span>
 				</button>
 			</div>
