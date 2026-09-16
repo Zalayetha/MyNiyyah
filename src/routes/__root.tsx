@@ -16,7 +16,7 @@ export const Route = createRootRoute({
 				content: "width=device-width, initial-scale=1",
 			},
 			{
-				title: "MyNiyyah - Teman Ibadah & Muhasabah Harian",
+				title: "MyNiyyah - Teman Ibadah dan Muhasabah Harian",
 			},
 			{
 				name: "description",
@@ -67,7 +67,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
-		<html lang="en" suppressHydrationWarning>
+		<html lang="id" suppressHydrationWarning>
 			<head>
 				<HeadContent />
 			</head>
