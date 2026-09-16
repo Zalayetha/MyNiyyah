@@ -10,6 +10,7 @@ import {
 	type HeatmapDataResponse,
 	type PrayerHeatmapLog,
 } from "./prayer-heatmap";
+import { getCalculationMethodValues } from "./prayer-method-server";
 import { db } from "./prisma";
 import { parseIsoDate, parseTimezone } from "./server-validation";
 import { getCurrentSession } from "./session";
@@ -106,6 +107,9 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 
 		// 4. Calculate prayer schedules for each day in the window
 		const schedulesByDate: Record<string, DailyPrayerSchedule> = {};
+		const methodValues = await getCalculationMethodValues(
+			pref.calculationMethodId ?? "kemenag",
+		);
 		for (const day of days) {
 			try {
 				schedulesByDate[day.date] = calculateDailyPrayerSchedule(day.date, {
@@ -114,6 +118,7 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 					timezoneOffset: offsetHours,
 					timezone: effectiveTimezone,
 					calculationMethodId: pref.calculationMethodId ?? "kemenag",
+					methodValues,
 				});
 			} catch (error) {
 				console.error(

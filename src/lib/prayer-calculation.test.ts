@@ -58,6 +58,17 @@ describe("prayer calculation engine", () => {
 		).toBe(90);
 	});
 
+	it("uses persisted calculation-method values when they differ from the fallback preset", () => {
+		const fallback = calculateDailyPrayerSchedule("2026-09-14", jakartaParams);
+		const persisted = calculateDailyPrayerSchedule("2026-09-14", {
+			...jakartaParams,
+			methodValues: { fajrAngle: 16, ishaAngle: 16, ishaIntervalMinutes: null },
+		});
+		expect(
+			persisted.items.find((item) => item.id === "subuh")?.rawTime,
+		).not.toBe(fallback.items.find((item) => item.id === "subuh")?.rawTime);
+	});
+
 	it("rolls the next prayer to tomorrow's Subuh after Isya", () => {
 		const schedule = calculateDailyPrayerSchedule("2026-09-14", jakartaParams);
 		const status = getNextPrayerStatus(

@@ -12,7 +12,7 @@ import {
 	Sunrise,
 	Sunset,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SwipeToPray } from "#/components/SwipeToPray";
 import {
 	getPrayerWindowDetails,
@@ -247,13 +247,19 @@ function PrayerTrackerPage() {
 		formatLocalTime(new Date(), data.timezone, "."),
 	);
 	const [now, setNow] = useState(() => new Date());
+	const [actionError, setActionError] = useState<string | null>(null);
+	const timezoneRequested = useRef<string | null>(null);
+	const rolloverRequested = useRef<string | null>(null);
 
-	// Client-side real-time timezone detection
 	useEffect(() => {
 		const clientTz = getBrowserTimezone();
-		if (clientTz && clientTz !== data.timezone) {
+		if (
+			clientTz &&
+			clientTz !== data.timezone &&
+			timezoneRequested.current !== clientTz
+		) {
+			timezoneRequested.current = clientTz;
 			const clientDate = formatLocalDate(new Date(), clientTz);
-			setActiveTimezone(clientTz);
 			void getPrayerTrackerData({
 				data: {
 					clientTimezone: clientTz,
@@ -261,9 +267,26 @@ function PrayerTrackerPage() {
 				},
 			}).then((refreshed) => {
 				setData(refreshed);
+				setActiveTimezone(refreshed.timezone);
 			});
 		}
 	}, [data.timezone]);
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			const localDate = formatLocalDate(new Date(), data.timezone);
+			if (
+				localDate === data.prayerDate ||
+				rolloverRequested.current === localDate
+			)
+				return;
+			rolloverRequested.current = localDate;
+			void getPrayerTrackerData({
+				data: { clientLocalDate: localDate, clientTimezone: data.timezone },
+			}).then(setData);
+		}, 30_000);
+		return () => clearInterval(interval);
+	}, [data.prayerDate, data.timezone]);
 
 	// Real-time ticking clock and interval for prayer time window transitions
 	useEffect(() => {
@@ -336,13 +359,16 @@ function PrayerTrackerPage() {
 	const tzAbbr = getTimezoneAbbreviation(activeTimezone, offsetHours);
 
 	// Handle Swipe to Pray unlock with validation
-	const handleUnlock = async () => {
+	const handleUnlock = async (): Promise<boolean> => {
 		const prayerToComplete = currentPrayerMeta.id;
 		const currentStatus = detailMap.get(prayerToComplete);
 
 		if (!currentStatus?.canTrack) {
-			return;
+			return false;
 		}
+		setActionError(null);
+		const previousData = data;
+		const completedAt = new Date().toISOString();
 
 		// Optimistic UI update
 		setData((prev) => ({
@@ -351,44 +377,37 @@ function PrayerTrackerPage() {
 				...prev.logs,
 				[prayerToComplete]: {
 					completed: true,
-					completedAt: new Date().toISOString(),
+					completedAt,
 					status: "completed",
 				},
 			},
 			completedCount: prev.completedCount + 1,
 		}));
 
-		// Advance to next active or upcoming uncompleted prayer
-		setTimeout(() => {
-			setSelectedPrayerIndex((prevIndex) => {
-				for (let i = prevIndex + 1; i < PRAYER_METAS.length; i++) {
-					const detail = detailMap.get(PRAYER_METAS[i].id);
-					if (detail && !detail.status.startsWith("completed")) {
-						return i;
-					}
-				}
-				for (let i = 0; i < prevIndex; i++) {
-					const detail = detailMap.get(PRAYER_METAS[i].id);
-					if (detail && !detail.status.startsWith("completed")) {
-						return i;
-					}
-				}
-				return prevIndex;
-			});
-			setSliderKey((prev) => prev + 1);
-		}, 600);
-
-		// Persist to database via server function
 		try {
 			await completePrayerAction({
 				data: {
 					prayerName: prayerToComplete,
 					prayerDate: data.prayerDate,
-					completedAt: new Date().toISOString(),
 				},
 			});
+			setSelectedPrayerIndex((prevIndex) => {
+				const next = PRAYER_METAS.findIndex(
+					(meta, index) => index > prevIndex && !data.logs[meta.id].completed,
+				);
+				return next >= 0 ? next : prevIndex;
+			});
+			setSliderKey((prev) => prev + 1);
+			return true;
 		} catch (error) {
 			console.error("Failed to complete prayer log:", error);
+			setData(previousData);
+			setActionError(
+				error instanceof Error
+					? error.message
+					: "Gagal menyimpan catatan solat.",
+			);
+			return false;
 		}
 	};
 
@@ -535,9 +554,18 @@ function PrayerTrackerPage() {
 				<SwipeToPray
 					key={sliderKey}
 					onUnlock={handleUnlock}
+					hapticsEnabled={initialData.hapticsEnabled}
 					className="m-8"
 					text={`Geser selesai ${currentPrayerMeta.name}`}
 				/>
+			)}
+			{actionError && (
+				<div
+					className="mx-8 mb-8 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-center text-destructive text-sm"
+					role="alert"
+				>
+					{actionError} Coba lagi.
+				</div>
 			)}
 		</div>
 	);

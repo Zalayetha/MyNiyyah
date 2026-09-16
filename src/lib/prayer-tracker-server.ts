@@ -8,11 +8,11 @@ import {
 	getPrayerWindowDetails,
 	type PrayerName,
 } from "./prayer-calculation";
+import { getCalculationMethodValues } from "./prayer-method-server";
 import { db } from "./prisma";
 import { unauthorizedError, validationError } from "./server-errors";
 import {
 	parseIsoDate,
-	parseIsoTimestamp,
 	parseLocationSource,
 	parsePrayerName,
 	parseTimezone,
@@ -42,6 +42,7 @@ export interface PrayerTrackerData {
 	logs: Record<PrayerName, PrayerLogStatus>;
 	completedCount: number;
 	totalPrayers: number;
+	hapticsEnabled: boolean;
 	userPreference: {
 		cityId: string | null;
 		cityName: string;
@@ -138,38 +139,12 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
 			timezoneOffset: activeOffset,
 			timezone: activeTimezone,
 			calculationMethodId: pref.calculationMethodId ?? "kemenag",
+			methodValues: await getCalculationMethodValues(
+				pref.calculationMethodId ?? "kemenag",
+			),
 		});
 
-		// 4. Optionally cache schedules into prayerSchedule
-		const locationKey = pref.cityId || `${pref.latitude},${pref.longitude}`;
-		try {
-			for (const item of schedule.items) {
-				const scheduledInstant = toTemporalInstant(item.scheduledAt);
-				if (!scheduledInstant) continue;
-				await db.orm.public.PrayerSchedule.where({
-					locationKey,
-					prayerDate,
-					prayerName: item.id,
-					calculationMethodId: pref.calculationMethodId ?? "kemenag",
-				}).upsert({
-					create: {
-						id: randomUUID(),
-						locationKey,
-						prayerDate,
-						prayerName: item.id,
-						scheduledAt: scheduledInstant,
-						timezone: activeTimezone,
-						calculationMethodId: pref.calculationMethodId ?? "kemenag",
-					},
-					update: {},
-				});
-			}
-		} catch (err) {
-			// Non-blocking cache write
-			console.error("Failed to cache prayerSchedule:", err);
-		}
-
-		// 5. Fetch prayer logs for this user on this date
+		// Fetch prayer logs for this user on this date.
 		const logRows = await db.orm.public.PrayerLog.where({ userId, prayerDate })
 			.select("prayerName", "completedAt", "status")
 			.all();
@@ -201,6 +176,9 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
 			status: "completed",
 		}).aggregate((aggregate) => ({ total: aggregate.count() }));
 		const totalPrayers = totalPrayersResult.total;
+		const userPreference = await db.orm.public.UserPreference.where({ userId })
+			.select("vibrateOnPray")
+			.first();
 
 		return {
 			prayerDate,
@@ -215,6 +193,7 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
 			logs,
 			completedCount,
 			totalPrayers,
+			hapticsEnabled: userPreference?.vibrateOnPray ?? true,
 			userPreference: {
 				cityId: pref.cityId,
 				cityName: pref.cityName,
@@ -233,10 +212,7 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
  * Server function to complete a prayer log via Swipe to Pray.
  */
 export const completePrayerAction = createServerFn({ method: "POST" })
-	.validator(
-		(input: { prayerName: string; prayerDate: string; completedAt?: string }) =>
-			input,
-	)
+	.validator((input: { prayerName: string; prayerDate: string }) => input)
 	.handler(async ({ data }) => {
 		const session = await getCurrentSession();
 		if (!session?.user) throw unauthorizedError();
@@ -246,9 +222,7 @@ export const completePrayerAction = createServerFn({ method: "POST" })
 		const normalizedPrayerName = parsePrayerName(data.prayerName);
 		const prayerDate = parseIsoDate(data.prayerDate, "prayerDate");
 
-		const completedTimestamp = data.completedAt
-			? parseIsoTimestamp(data.completedAt, "completedAt")
-			: new Date();
+		const completedTimestamp = new Date();
 
 		// Validate prayer window against user location preference and schedule
 		const pref =
@@ -261,6 +235,9 @@ export const completePrayerAction = createServerFn({ method: "POST" })
 			timezoneOffset: pref.timezoneOffset ?? 7,
 			timezone: pref.timezone ?? "Asia/Jakarta",
 			calculationMethodId: pref.calculationMethodId ?? "kemenag",
+			methodValues: await getCalculationMethodValues(
+				pref.calculationMethodId ?? "kemenag",
+			),
 		});
 
 		const windowDetails = getPrayerWindowDetails(
@@ -281,21 +258,39 @@ export const completePrayerAction = createServerFn({ method: "POST" })
 
 		// Idempotent UPSERT into prayerLog
 		const completedInstant = toTemporalInstant(completedTimestamp);
-		await db.orm.public.PrayerLog.where({
+		const existingLog = await db.orm.public.PrayerLog.where({
 			userId,
 			prayerDate,
 			prayerName: normalizedPrayerName,
-		}).upsert({
-			create: {
-				id: randomUUID(),
+		}).first();
+		if (!existingLog?.status || existingLog.status !== "completed") {
+			await db.orm.public.PrayerLog.where({
 				userId,
 				prayerDate,
 				prayerName: normalizedPrayerName,
-				completedAt: completedInstant,
-				status: "completed",
-			},
-			update: { status: "completed", completedAt: completedInstant },
-		});
+			}).upsert({
+				create: {
+					id: randomUUID(),
+					userId,
+					prayerDate,
+					prayerName: normalizedPrayerName,
+					scheduledAt: toTemporalInstant(
+						schedule.items.find((item) => item.id === normalizedPrayerName)
+							?.scheduledAt,
+					),
+					completedAt: completedInstant,
+					status: "completed",
+				},
+				update: {
+					status: "completed",
+					completedAt: completedInstant,
+					scheduledAt: toTemporalInstant(
+						schedule.items.find((item) => item.id === normalizedPrayerName)
+							?.scheduledAt,
+					),
+				},
+			});
+		}
 
 		// Calculate updated completed count
 		const completedCountResult = await db.orm.public.PrayerLog.where({
@@ -310,6 +305,42 @@ export const completePrayerAction = createServerFn({ method: "POST" })
 			prayerName: normalizedPrayerName,
 			completedCount,
 		};
+	});
+
+export const correctPrayerAction = createServerFn({ method: "POST" })
+	.validator(
+		(input: { prayerName: string; prayerDate: string; completed: boolean }) => {
+			if (typeof input.completed !== "boolean") {
+				throw validationError("completed is invalid.");
+			}
+			return input;
+		},
+	)
+	.handler(async ({ data }) => {
+		const session = await getCurrentSession();
+		if (!session?.user) throw unauthorizedError();
+		setPrivateCacheControl();
+		const userId = session.user.id;
+		const prayerName = parsePrayerName(data.prayerName);
+		const prayerDate = parseIsoDate(data.prayerDate, "prayerDate");
+		const scope = { userId, prayerDate, prayerName };
+		if (!data.completed) {
+			await db.orm.public.PrayerLog.where(scope).delete();
+			return { success: true, prayerName, completed: false };
+		}
+		await db.orm.public.PrayerLog.where(scope).upsert({
+			create: {
+				id: randomUUID(),
+				...scope,
+				completedAt: toTemporalInstant(new Date()),
+				status: "completed",
+			},
+			update: {
+				status: "completed",
+				completedAt: toTemporalInstant(new Date()),
+			},
+		});
+		return { success: true, prayerName, completed: true };
 	});
 
 /**

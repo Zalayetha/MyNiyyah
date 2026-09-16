@@ -18,6 +18,7 @@ import {
 	PRAYER_NAMES,
 	type PrayerName,
 } from "./prayer-calculation";
+import { getCalculationMethodValues } from "./prayer-method-server";
 import { db } from "./prisma";
 import {
 	notFoundError,
@@ -264,6 +265,9 @@ export const getJournalInitialData = createServerFn({ method: "GET" })
 			timezoneOffset,
 			timezone,
 			calculationMethodId: pref.calculationMethodId ?? "kemenag",
+			methodValues: await getCalculationMethodValues(
+				pref.calculationMethodId ?? "kemenag",
+			),
 		});
 
 		const logRows = await db.orm.public.PrayerLog.where({

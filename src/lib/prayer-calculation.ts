@@ -52,6 +52,13 @@ export interface CalculationParams {
 	fajrAngle?: number;
 	ishaAngle?: number;
 	ishaIntervalMinutes?: number | null;
+	methodValues?: CalculationMethodValues;
+}
+
+export interface CalculationMethodValues {
+	fajrAngle?: number | null;
+	ishaAngle?: number | null;
+	ishaIntervalMinutes?: number | null;
 }
 
 const METHOD_PRESETS: Record<
@@ -143,6 +150,11 @@ export function calculateDailyPrayerSchedule(
 	const ishaAngle = params.ishaAngle ?? preset.ishaAngle;
 	const ishaIntervalMinutes =
 		params.ishaIntervalMinutes ?? preset.ishaIntervalMinutes;
+	const methodValues = params.methodValues;
+	const resolvedFajrAngle = methodValues?.fajrAngle ?? fajrAngle;
+	const resolvedIshaAngle = methodValues?.ishaAngle ?? ishaAngle;
+	const resolvedIshaIntervalMinutes =
+		methodValues?.ishaIntervalMinutes ?? ishaIntervalMinutes;
 
 	// Julian Date calculation
 	let Y = year;
@@ -182,7 +194,7 @@ export function calculateDailyPrayerSchedule(
 	}
 
 	// Calculate Hour Angles
-	const fajrHA = hourAngle(-fajrAngle);
+	const fajrHA = hourAngle(-resolvedFajrAngle);
 	const sunriseHA = hourAngle(-0.833);
 	const sunsetHA = hourAngle(-0.833);
 
@@ -202,10 +214,10 @@ export function calculateDailyPrayerSchedule(
 	const maghribHours = fixHour(noon + sunsetHA + ihtiyatHours);
 
 	let isyaHours: number;
-	if (ishaIntervalMinutes) {
-		isyaHours = fixHour(maghribHours + ishaIntervalMinutes / 60);
+	if (resolvedIshaIntervalMinutes) {
+		isyaHours = fixHour(maghribHours + resolvedIshaIntervalMinutes / 60);
 	} else {
-		const ishaHA = hourAngle(-(ishaAngle ?? 18));
+		const ishaHA = hourAngle(-(resolvedIshaAngle ?? 18));
 		isyaHours = fixHour(noon + ishaHA + ihtiyatHours);
 	}
 
