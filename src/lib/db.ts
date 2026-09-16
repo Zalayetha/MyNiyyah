@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { getServerEnvironment } from "./env";
 
 declare global {
 	var __pgPool: Pool | undefined;
@@ -7,7 +8,7 @@ declare global {
 export const pool =
 	globalThis.__pgPool ??
 	new Pool({
-		connectionString: process.env.DATABASE_URL,
+		connectionString: getServerEnvironment().databaseUrl,
 	});
 
 if (process.env.NODE_ENV !== "production") {

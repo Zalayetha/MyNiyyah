@@ -24,6 +24,7 @@ jobs:
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/myniyyah?schema=public"
       BETTER_AUTH_SECRET: "ci-dummy-auth-secret-for-build-and-testing-only-12345"
       BETTER_AUTH_URL: "http://localhost:3000"
+      BETTER_AUTH_TRUSTED_ORIGINS: ""
 
     steps:
       - name: Check out repository
@@ -72,10 +73,15 @@ jobs:
       #     port: ${{ secrets.SSH_PORT }}
       #     script: |
       #       set -e
-      #       export PATH="/root/.nvm/versions/node/v24.18.0/bin:$PATH"
       #       cd /root/live/MyNiyyah
       #       git fetch origin main
-      #       git reset --hard origin/main
-      #       npm ci
-      #       npm run build
-      #       pm2 restart entrosync
+      #       git checkout main
+      #       git pull --ff-only origin main
+      #       corepack enable
+      #       pnpm install --frozen-lockfile
+      #       pnpm contract:emit
+      #       pnpm build
+      #       set -a
+      #       . /etc/myniyyah.env
+      #       set +a
+      #       pm2 reload ecosystem.config.cjs --only myniyyah --update-env

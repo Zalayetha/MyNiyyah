@@ -1,14 +1,7 @@
 import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { pool } from "./db";
-
-function normalizeOrigin(origin: string) {
-	return origin.trim().replace(/\/+$/, "");
-}
-
-function parseOrigins(value: string | undefined) {
-	return value?.split(",").map(normalizeOrigin).filter(Boolean) ?? [];
-}
+import { getServerEnvironment } from "./env";
 
 async function bootstrapUser(userId: string) {
 	await pool.query(
@@ -33,28 +26,16 @@ async function bootstrapUser(userId: string) {
 	);
 }
 
-function getTrustedOrigins() {
-	const authUrlOrigins = parseOrigins(process.env.BETTER_AUTH_URL);
-	const configuredOrigins = parseOrigins(
-		process.env.BETTER_AUTH_TRUSTED_ORIGINS,
-	);
-
-	return Array.from(
-		new Set(["http://localhost:3000", ...authUrlOrigins, ...configuredOrigins]),
-	);
-}
-
-function getAuthBaseUrl() {
-	return parseOrigins(process.env.BETTER_AUTH_URL)[0];
-}
+const serverEnvironment = getServerEnvironment();
 
 export const auth = betterAuth({
-	baseURL: getAuthBaseUrl(),
+	baseURL: serverEnvironment.betterAuthUrl,
+	secret: serverEnvironment.betterAuthSecret,
 	database: pool,
 	emailAndPassword: {
 		enabled: true,
 	},
-	trustedOrigins: getTrustedOrigins(),
+	trustedOrigins: serverEnvironment.betterAuthTrustedOrigins,
 	databaseHooks: {
 		user: {
 			create: {
