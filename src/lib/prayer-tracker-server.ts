@@ -22,6 +22,7 @@ import {
 	formatLocalDate,
 	getTimezoneAbbreviation,
 	getTimezoneOffsetHours,
+	serializeInstant,
 	toTemporalInstant,
 } from "./timezone";
 
@@ -188,9 +189,7 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
 				const isCompleted = row.status === "completed";
 				logs[name] = {
 					completed: isCompleted,
-					completedAt: row.completedAt
-						? new Date(row.completedAt).toISOString()
-						: null,
+					completedAt: serializeInstant(row.completedAt),
 					status: row.status,
 				};
 				if (isCompleted) completedCount++;

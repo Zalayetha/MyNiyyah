@@ -1,10 +1,35 @@
 import { Temporal } from "@js-temporal/polyfill";
 
+export type InstantInput =
+	| Date
+	| string
+	| { epochMilliseconds?: number; toString(): string }
+	| null
+	| undefined;
+
+export function normalizeInstantDate(value: InstantInput): Date | null {
+	if (!value) return null;
+	const date =
+		value instanceof Date
+			? value
+			: typeof value === "object" && typeof value.epochMilliseconds === "number"
+				? new Date(value.epochMilliseconds)
+				: new Date(String(value));
+	return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function serializeInstant(value: InstantInput): string | null {
+	if (!value) return null;
+	if (value instanceof Date) return value.toISOString();
+	return String(value);
+}
+
 export function toTemporalInstant(
-	value: Date | string | null | undefined,
+	value: InstantInput,
 ): Temporal.Instant | null {
 	if (!value) return null;
-	const iso = value instanceof Date ? value.toISOString() : value;
+	const iso = serializeInstant(value);
+	if (!iso) return null;
 	return Temporal.Instant.from(iso);
 }
 

@@ -5,7 +5,10 @@ import { setPrivateCacheControl } from "./cache";
 import {
 	calculateDailyPrayerMetrics,
 	calculateJournalSummary,
+	FEELING_OPTIONS,
 	type JournalDraft,
+	type JournalDraftAttachedVerse,
+	type JournalDraftFeeling,
 	type JournalPrayerLog,
 	type PrayerMetric,
 } from "./journal-reflection";
@@ -25,6 +28,7 @@ import {
 	parseId,
 	parseIsoDate,
 	parsePrayerName,
+	parseScore,
 	parseText,
 	parseTimezone,
 } from "./server-validation";
@@ -33,6 +37,8 @@ import {
 	formatLocalDate,
 	getTimezoneAbbreviation,
 	getTimezoneOffsetHours,
+	normalizeInstantDate,
+	serializeInstant,
 	toTemporalInstant,
 } from "./timezone";
 
@@ -95,6 +101,91 @@ function normalizePrayerName(value: string): PrayerName {
 
 function toDbFeeling(feeling: string): string {
 	return feeling.toLowerCase().replace("'", "");
+}
+
+const FEELING_LABELS = new Set(FEELING_OPTIONS.map((option) => option.label));
+
+function parseJournalDraftFeelings(
+	value: unknown,
+): Partial<Record<PrayerName, JournalDraftFeeling>> {
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		throw validationError("feelings is invalid.");
+	}
+
+	const feelings = value as Record<string, unknown>;
+	const parsed: Partial<Record<PrayerName, JournalDraftFeeling>> = {};
+	for (const prayerName of PRAYER_NAMES) {
+		const raw = feelings[prayerName];
+		if (raw === null || raw === undefined) continue;
+		if (typeof raw !== "object" || Array.isArray(raw)) {
+			throw validationError(`feelings.${prayerName} is invalid.`);
+		}
+		const feeling = raw as Record<string, unknown>;
+		const score = parseScore(feeling.score, `feelings.${prayerName}.score`);
+		const khusyuScore = parseScore(
+			feeling.khusyuScore,
+			`feelings.${prayerName}.khusyuScore`,
+		);
+		if (score === null || khusyuScore === null) {
+			throw validationError(`feelings.${prayerName} is incomplete.`);
+		}
+		const feelingIndex = feeling.feelingIndex;
+		if (
+			typeof feelingIndex !== "number" ||
+			!Number.isInteger(feelingIndex) ||
+			feelingIndex < 0 ||
+			feelingIndex > 3
+		) {
+			throw validationError(`feelings.${prayerName}.feelingIndex is invalid.`);
+		}
+		const feelingLabel = parseText(
+			feeling.feelingLabel,
+			`feelings.${prayerName}.feelingLabel`,
+			32,
+			{ required: true },
+		) as JournalDraftFeeling["feelingLabel"];
+		if (!FEELING_LABELS.has(feelingLabel)) {
+			throw validationError(`feelings.${prayerName}.feelingLabel is invalid.`);
+		}
+		parsed[prayerName] = {
+			feelingIndex,
+			feelingLabel,
+			score,
+			khusyuScore,
+		};
+	}
+	return parsed;
+}
+
+function parseAttachedVerses(value: unknown): JournalDraftAttachedVerse[] {
+	if (!Array.isArray(value) || value.length > 20) {
+		throw validationError("attachedVerses is invalid.");
+	}
+	return value.map((raw, index) => {
+		if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+			throw validationError(`attachedVerses[${index}] is invalid.`);
+		}
+		const verse = raw as Record<string, unknown>;
+		return {
+			verseId: parseId(verse.verseId, `attachedVerses[${index}].verseId`),
+			segmentId:
+				verse.segmentId === null || verse.segmentId === undefined
+					? null
+					: parseId(verse.segmentId, `attachedVerses[${index}].segmentId`),
+			surahRef: parseText(
+				verse.surahRef,
+				`attachedVerses[${index}].surahRef`,
+				160,
+				{ required: true },
+			),
+			quoteText: parseText(
+				verse.quoteText,
+				`attachedVerses[${index}].quoteText`,
+				5_000,
+				{ required: true },
+			),
+		};
+	});
 }
 
 function getIsyaScheduledAt(schedule: DailyPrayerSchedule): Date | null {
@@ -198,8 +289,8 @@ export const getJournalInitialData = createServerFn({ method: "GET" })
 		const logs = logRows.map((row) => ({
 			id: row.id,
 			prayerName: normalizePrayerName(row.prayerName),
-			scheduledAt: row.scheduledAt,
-			completedAt: row.completedAt,
+			scheduledAt: serializeInstant(row.scheduledAt),
+			completedAt: serializeInstant(row.completedAt),
 			status: row.status,
 			feeling: reflectionsByPrayer.get(row.prayerName)?.feeling ?? null,
 			feelingScore:
@@ -302,7 +393,8 @@ export const getJournalThemeEntries = createServerFn({ method: "GET" })
 				.sort(
 					(a, b) =>
 						b.journalDate.localeCompare(a.journalDate) ||
-						b.updatedAt.getTime() - a.updatedAt.getTime(),
+						(normalizeInstantDate(b.updatedAt)?.getTime() ?? 0) -
+							(normalizeInstantDate(a.updatedAt)?.getTime() ?? 0),
 				)
 				.map((row) => ({
 					id: row.id,
@@ -330,22 +422,8 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 			data.themeId === null ? null : parseId(data.themeId, "themeId");
 		const title = parseText(data.title, "title", 160) || "Muhasabah Harian";
 		const content = parseText(data.content, "content", 20_000);
-		if (!Array.isArray(data.feelings) && typeof data.feelings !== "object") {
-			throw validationError("feelings is invalid.");
-		}
-		if (
-			!Array.isArray(data.attachedVerses) ||
-			data.attachedVerses.length > 20
-		) {
-			throw validationError("attachedVerses is invalid.");
-		}
-		for (const verse of data.attachedVerses) {
-			parseId(verse.verseId, "verseId");
-			if (verse.segmentId !== null && verse.segmentId !== undefined)
-				parseId(verse.segmentId, "segmentId");
-			parseText(verse.quoteText, "quoteText", 5_000, { required: true });
-			parseText(verse.surahRef, "surahRef", 160, { required: true });
-		}
+		const feelings = parseJournalDraftFeelings(data.feelings);
+		const attachedVerses = parseAttachedVerses(data.attachedVerses);
 
 		const initialData = await getJournalInitialData({
 			data: { journalDate },
@@ -357,7 +435,7 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 		}
 
 		const summary = calculateJournalSummary(
-			data.feelings,
+			feelings,
 			initialData.prayerMetrics,
 		);
 		const journalEntryId = await db.transaction(async (tx) => {
@@ -389,7 +467,7 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 
 			for (const prayerName of PRAYER_NAMES) {
 				const metric = initialData.prayerMetrics[prayerName];
-				const feeling = data.feelings[prayerName];
+				const feeling = feelings[prayerName];
 				const scheduleItem = initialData.schedule.items.find(
 					(item) => item.id === prayerName,
 				);
@@ -427,7 +505,7 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 				journalEntryId: entry.id,
 			}).delete();
 
-			for (const verse of data.attachedVerses) {
+			for (const verse of attachedVerses) {
 				await tx.orm.public.JournalAttachedVerse.create({
 					id: randomUUID(),
 					journalEntryId: entry.id,
@@ -499,7 +577,10 @@ export const deleteJournalEntryAction = createServerFn({ method: "POST" })
 			throw notFoundError("Journal entry not found");
 		}
 
-		await db.orm.public.JournalEntry.where({ id: entry.id }).delete();
+		await db.orm.public.JournalEntry.where({
+			id: entry.id,
+			userId: session.user.id,
+		}).delete();
 
 		return { success: true };
 	});

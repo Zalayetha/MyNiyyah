@@ -1,4 +1,8 @@
-import { getLocalDateParts } from "./timezone";
+import {
+	getLocalDateParts,
+	type InstantInput,
+	normalizeInstantDate,
+} from "./timezone";
 
 export type PrayerName = "subuh" | "zhuhur" | "ashar" | "maghrib" | "isya";
 
@@ -335,13 +339,13 @@ export type PrayerWindowStatus =
 
 export type PrayerCompletionLookup =
 	| ReadonlySet<PrayerName>
-	| ReadonlyMap<PrayerName, Date | string | null>;
+	| ReadonlyMap<PrayerName, InstantInput>;
 
 export interface EvaluatePrayerStatusParams {
 	scheduledAt: Date;
 	onTimeWindowEndAt: Date;
 	trackingCutoffAt: Date;
-	completedAt?: Date | string | null;
+	completedAt?: InstantInput;
 	isCompleted?: boolean;
 	referenceDate?: Date;
 }
@@ -352,12 +356,6 @@ export function getNextSubuhAt(schedule: DailyPrayerSchedule): Date {
 	return new Date(subuh.scheduledAt.getTime() + 24 * 60 * 60 * 1000);
 }
 
-function normalizeCompletionDate(value: Date | string | null | undefined) {
-	if (!value) return null;
-	const date = value instanceof Date ? value : new Date(value);
-	return Number.isNaN(date.getTime()) ? null : date;
-}
-
 export function evaluatePrayerStatus({
 	scheduledAt,
 	onTimeWindowEndAt,
@@ -366,7 +364,7 @@ export function evaluatePrayerStatus({
 	isCompleted = false,
 	referenceDate = new Date(),
 }: EvaluatePrayerStatusParams): PrayerWindowStatus {
-	const completion = normalizeCompletionDate(completedAt);
+	const completion = normalizeInstantDate(completedAt);
 	if (completion || isCompleted) {
 		return !completion || completion.getTime() < onTimeWindowEndAt.getTime()
 			? "completed-on-time"

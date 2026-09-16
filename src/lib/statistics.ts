@@ -1,4 +1,8 @@
-import { formatLocalDate } from "./timezone";
+import {
+	formatLocalDate,
+	type InstantInput,
+	normalizeInstantDate,
+} from "./timezone";
 
 export interface RateResult {
 	percentage: number;
@@ -8,9 +12,9 @@ export interface RateResult {
 }
 
 export interface PrayerMetricRecord {
-	scheduledAt?: Date | string | null;
-	onTimeWindowEndAt?: Date | string | null;
-	completedAt?: Date | string | null;
+	scheduledAt?: InstantInput;
+	onTimeWindowEndAt?: InstantInput;
+	completedAt?: InstantInput;
 }
 
 export interface ScoredReflection {
@@ -45,12 +49,6 @@ const INDONESIAN_DAY_ABBRS = [
 
 const LOCAL_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-function normalizeDate(value: Date | string | null | undefined): Date | null {
-	if (!value) return null;
-	const date = value instanceof Date ? value : new Date(value);
-	return Number.isNaN(date.getTime()) ? null : date;
-}
-
 function percentage(numerator: number, denominator: number): number {
 	return denominator === 0 ? 0 : Math.round((numerator / denominator) * 100);
 }
@@ -79,11 +77,11 @@ export function calculateElapsedCompletionRate(
 ): RateResult {
 	const referenceMs = referenceDate.getTime();
 	const elapsed = records.filter((record) => {
-		const scheduledAt = normalizeDate(record.scheduledAt);
+		const scheduledAt = normalizeInstantDate(record.scheduledAt);
 		return scheduledAt !== null && scheduledAt.getTime() <= referenceMs;
 	});
 	const completed = elapsed.filter(
-		(record) => normalizeDate(record.completedAt) !== null,
+		(record) => normalizeInstantDate(record.completedAt) !== null,
 	).length;
 
 	return {
@@ -96,9 +94,9 @@ export function calculateElapsedCompletionRate(
 
 export function calculateOnTimeRate(records: PrayerMetricRecord[]): RateResult {
 	const validCompletions = records.flatMap((record) => {
-		const scheduledAt = normalizeDate(record.scheduledAt);
-		const windowEndAt = normalizeDate(record.onTimeWindowEndAt);
-		const completedAt = normalizeDate(record.completedAt);
+		const scheduledAt = normalizeInstantDate(record.scheduledAt);
+		const windowEndAt = normalizeInstantDate(record.onTimeWindowEndAt);
+		const completedAt = normalizeInstantDate(record.completedAt);
 		return scheduledAt && windowEndAt && completedAt
 			? [{ scheduledAt, windowEndAt, completedAt }]
 			: [];

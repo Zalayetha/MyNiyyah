@@ -6,6 +6,7 @@ import {
 	type PrayerName,
 } from "./prayer-calculation";
 import { getWeekDayColumns, type PeriodDayColumn } from "./statistics";
+import { type InstantInput, serializeInstant } from "./timezone";
 
 export type HeatmapStatus = 0 | 1 | 2 | 3 | null;
 
@@ -24,8 +25,8 @@ export type HeatmapDayColumn = PeriodDayColumn;
 export interface PrayerHeatmapLog {
 	prayerDate: string;
 	prayerName: string;
-	scheduledAt?: Date | string | null;
-	completedAt?: Date | string | null;
+	scheduledAt?: InstantInput;
+	completedAt?: InstantInput;
 	status: string;
 }
 
@@ -186,10 +187,7 @@ export function buildHeatmapMatrix({
 				prayerDate: day.date,
 				status,
 				statusLabel,
-				completedAt:
-					log?.completedAt instanceof Date
-						? log.completedAt.toISOString()
-						: (log?.completedAt ?? null),
+				completedAt: serializeInstant(log?.completedAt),
 			});
 			statusRow.push(status);
 		}

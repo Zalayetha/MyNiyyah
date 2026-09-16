@@ -9,7 +9,12 @@ import {
 	calculateOnTimeRate,
 	isValidLocalDate,
 } from "./statistics";
-import { formatLocalDate, formatLocalTime } from "./timezone";
+import {
+	formatLocalDate,
+	formatLocalTime,
+	type InstantInput,
+	normalizeInstantDate,
+} from "./timezone";
 
 export const JOURNAL_DRAFT_STORAGE_KEY = "myniyyah_journal_draft";
 
@@ -103,12 +108,6 @@ export interface JournalEligibility {
 	reason: JournalEligibilityReason;
 }
 
-function normalizeDate(value: string | Date | null | undefined): Date | null {
-	if (!value) return null;
-	const date = value instanceof Date ? value : new Date(value);
-	return Number.isNaN(date.getTime()) ? null : date;
-}
-
 function getFeelingByScore(score: number | null | undefined) {
 	if (!score) return null;
 	return FEELING_OPTIONS[score - 1] ?? null;
@@ -161,9 +160,9 @@ export function calculatePrayerMetrics(
 	onTimeWindowEndAt: Date | null = null,
 ): PrayerMetric {
 	const scheduledAt =
-		normalizeDate(log?.scheduledAt) ?? scheduleItem.scheduledAt;
+		normalizeInstantDate(log?.scheduledAt) ?? scheduleItem.scheduledAt;
 	const completedAt =
-		log?.status === "completed" ? normalizeDate(log.completedAt) : null;
+		log?.status === "completed" ? normalizeInstantDate(log.completedAt) : null;
 	const { differenceMinutes, punctuality } = calculatePunctuality(
 		completedAt,
 		scheduledAt,
@@ -255,7 +254,7 @@ export function getJournalEligibility({
 }: {
 	journalDate: string;
 	todayDate: string;
-	isyaAt?: Date | string | null;
+	isyaAt?: InstantInput;
 	referenceDate?: Date;
 	isExisting?: boolean;
 }): JournalEligibility {
@@ -269,7 +268,7 @@ export function getJournalEligibility({
 		return { canCreate: false, canEdit: true, reason: "eligible" };
 	}
 	if (journalDate === todayDate) {
-		const isya = normalizeDate(isyaAt);
+		const isya = normalizeInstantDate(isyaAt);
 		if (!isya || referenceDate.getTime() < isya.getTime()) {
 			return { canCreate: false, canEdit: false, reason: "day-in-progress" };
 		}

@@ -6,6 +6,9 @@ import {
 	getLocalDateParts,
 	getTimezoneAbbreviation,
 	getTimezoneOffsetHours,
+	normalizeInstantDate,
+	serializeInstant,
+	toTemporalInstant,
 } from "./timezone";
 
 describe("timezone utilities", () => {
@@ -62,5 +65,23 @@ describe("timezone utilities", () => {
 		expect(parts.day).toBe(14);
 		expect(parts.hour).toBe(7);
 		expect(parts.minute).toBe(5);
+	});
+
+	it("normalizes Temporal-like instants without implicit arithmetic coercion", () => {
+		const temporalLike = {
+			epochMilliseconds: Date.parse("2026-09-16T12:00:00Z"),
+			toString: () => "2026-09-16T12:00:00Z",
+			valueOf: () => {
+				throw new TypeError("Do not use built-in arithmetic operators");
+			},
+		};
+
+		expect(serializeInstant(temporalLike)).toBe("2026-09-16T12:00:00Z");
+		expect(normalizeInstantDate(temporalLike)?.toISOString()).toBe(
+			"2026-09-16T12:00:00.000Z",
+		);
+		expect(toTemporalInstant(temporalLike)?.toString()).toBe(
+			"2026-09-16T12:00:00Z",
+		);
 	});
 });
