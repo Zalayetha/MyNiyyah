@@ -1067,6 +1067,254 @@ export type StorageColumnInputTypes = {
     };
   };
 };
+
+export namespace Models {
+  export type public_User = {
+    id: CodecTypes['pg/text@1']['output'];
+    name: CodecTypes['pg/text@1']['output'];
+    email: CodecTypes['pg/text@1']['output'];
+    emailVerified: CodecTypes['pg/bool@1']['output'];
+    image: CodecTypes['pg/text@1']['output'] | null;
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_Session = {
+    id: CodecTypes['pg/text@1']['output'];
+    expiresAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    token: CodecTypes['pg/text@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    ipAddress: CodecTypes['pg/text@1']['output'] | null;
+    userAgent: CodecTypes['pg/text@1']['output'] | null;
+    userId: CodecTypes['pg/text@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_Account = {
+    id: CodecTypes['pg/text@1']['output'];
+    accountId: CodecTypes['pg/text@1']['output'];
+    providerId: CodecTypes['pg/text@1']['output'];
+    userId: CodecTypes['pg/text@1']['output'];
+    accessToken: CodecTypes['pg/text@1']['output'] | null;
+    refreshToken: CodecTypes['pg/text@1']['output'] | null;
+    idToken: CodecTypes['pg/text@1']['output'] | null;
+    accessTokenExpiresAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+    refreshTokenExpiresAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+    scope: CodecTypes['pg/text@1']['output'] | null;
+    password: CodecTypes['pg/text@1']['output'] | null;
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_Verification = {
+    id: CodecTypes['pg/text@1']['output'];
+    identifier: CodecTypes['pg/text@1']['output'];
+    value: CodecTypes['pg/text@1']['output'];
+    expiresAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_UserProfile = {
+    id: CodecTypes['pg/text@1']['output'];
+    userId: CodecTypes['pg/text@1']['output'];
+    phone: CodecTypes['pg/text@1']['output'] | null;
+    cityName: CodecTypes['pg/text@1']['output'] | null;
+    country: CodecTypes['pg/text@1']['output'];
+    bio: CodecTypes['pg/text@1']['output'] | null;
+    avatarUrl: CodecTypes['pg/text@1']['output'] | null;
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_UserPreference = {
+    id: CodecTypes['pg/text@1']['output'];
+    userId: CodecTypes['pg/text@1']['output'];
+    notifyPrayer: CodecTypes['pg/bool@1']['output'];
+    notifyJournal: CodecTypes['pg/bool@1']['output'];
+    vibrateOnPray: CodecTypes['pg/bool@1']['output'];
+    journalReminderTime: CodecTypes['pg/text@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_UserLocationPreference = {
+    id: CodecTypes['pg/text@1']['output'];
+    userId: CodecTypes['pg/text@1']['output'];
+    cityId: CodecTypes['pg/text@1']['output'] | null;
+    cityName: CodecTypes['pg/text@1']['output'];
+    province: CodecTypes['pg/text@1']['output'] | null;
+    country: CodecTypes['pg/text@1']['output'];
+    latitude: CodecTypes['pg/float8@1']['output'] | null;
+    longitude: CodecTypes['pg/float8@1']['output'] | null;
+    timezone: CodecTypes['pg/text@1']['output'];
+    timezoneOffset: CodecTypes['pg/int4@1']['output'];
+    calculationMethodId: CodecTypes['pg/text@1']['output'];
+    source: CodecTypes['pg/text@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_PrayerCalculationMethod = {
+    id: CodecTypes['pg/text@1']['output'];
+    name: CodecTypes['pg/text@1']['output'];
+    description: CodecTypes['pg/text@1']['output'];
+    fajrAngle: CodecTypes['pg/float8@1']['output'] | null;
+    ishaAngle: CodecTypes['pg/float8@1']['output'] | null;
+    ishaIntervalMinutes: CodecTypes['pg/int4@1']['output'] | null;
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_CityCatalog = {
+    id: CodecTypes['pg/text@1']['output'];
+    name: CodecTypes['pg/text@1']['output'];
+    province: CodecTypes['pg/text@1']['output'];
+    country: CodecTypes['pg/text@1']['output'];
+    latitude: CodecTypes['pg/float8@1']['output'] | null;
+    longitude: CodecTypes['pg/float8@1']['output'] | null;
+    timezone: CodecTypes['pg/text@1']['output'];
+    timezoneOffset: CodecTypes['pg/int4@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_PrayerSchedule = {
+    id: CodecTypes['pg/text@1']['output'];
+    locationKey: CodecTypes['pg/text@1']['output'];
+    prayerDate: CodecTypes['pg/text@1']['output'];
+    prayerName: CodecTypes['pg/text@1']['output'];
+    scheduledAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    timezone: CodecTypes['pg/text@1']['output'];
+    calculationMethodId: CodecTypes['pg/text@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_PrayerLog = {
+    id: CodecTypes['pg/text@1']['output'];
+    userId: CodecTypes['pg/text@1']['output'];
+    prayerDate: CodecTypes['pg/text@1']['output'];
+    prayerName: CodecTypes['pg/text@1']['output'];
+    scheduledAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+    completedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+    status: CodecTypes['pg/text@1']['output'];
+    feeling: CodecTypes['pg/text@1']['output'] | null;
+    feelingScore: CodecTypes['pg/int4@1']['output'] | null;
+    khusyuScore: CodecTypes['pg/int4@1']['output'] | null;
+    notes: CodecTypes['pg/text@1']['output'] | null;
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_JournalTheme = {
+    id: CodecTypes['pg/text@1']['output'];
+    slug: CodecTypes['pg/text@1']['output'];
+    title: CodecTypes['pg/text@1']['output'];
+    sortOrder: CodecTypes['pg/int4@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_JournalEntry = {
+    id: CodecTypes['pg/text@1']['output'];
+    userId: CodecTypes['pg/text@1']['output'];
+    journalDate: CodecTypes['pg/text@1']['output'];
+    themeId: CodecTypes['pg/text@1']['output'] | null;
+    title: CodecTypes['pg/text@1']['output'];
+    content: CodecTypes['pg/text@1']['output'];
+    khusyuPercentage: CodecTypes['pg/int4@1']['output'] | null;
+    punctualityPercentage: CodecTypes['pg/int4@1']['output'] | null;
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_JournalPrayerReflection = {
+    id: CodecTypes['pg/text@1']['output'];
+    journalEntryId: CodecTypes['pg/text@1']['output'];
+    prayerLogId: CodecTypes['pg/text@1']['output'] | null;
+    prayerName: CodecTypes['pg/text@1']['output'];
+    adzanAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+    completedAt: CodecTypes['pg/timestamptz-temporal@1']['output'] | null;
+    differenceMinutes: CodecTypes['pg/int4@1']['output'] | null;
+    punctuality: CodecTypes['pg/text@1']['output'] | null;
+    feeling: CodecTypes['pg/text@1']['output'] | null;
+    feelingScore: CodecTypes['pg/int4@1']['output'] | null;
+    khusyuScore: CodecTypes['pg/int4@1']['output'] | null;
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_KhazanahCategory = {
+    id: CodecTypes['pg/text@1']['output'];
+    slug: CodecTypes['pg/text@1']['output'];
+    title: CodecTypes['pg/text@1']['output'];
+    subtitle: CodecTypes['pg/text@1']['output'];
+    sortOrder: CodecTypes['pg/int4@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_KhazanahVerse = {
+    id: CodecTypes['pg/text@1']['output'];
+    categoryId: CodecTypes['pg/text@1']['output'];
+    title: CodecTypes['pg/text@1']['output'];
+    surahName: CodecTypes['pg/text@1']['output'];
+    surahTranslation: CodecTypes['pg/text@1']['output'];
+    juz: CodecTypes['pg/int4@1']['output'];
+    surahNumber: CodecTypes['pg/int4@1']['output'];
+    verseNumber: CodecTypes['pg/int4@1']['output'];
+    arabic: CodecTypes['pg/text@1']['output'];
+    translation: CodecTypes['pg/text@1']['output'];
+    reference: CodecTypes['pg/text@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_KhazanahVerseSegment = {
+    id: CodecTypes['pg/text@1']['output'];
+    verseId: CodecTypes['pg/text@1']['output'];
+    position: CodecTypes['pg/int4@1']['output'];
+    text: CodecTypes['pg/text@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    updatedAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+  export type public_JournalAttachedVerse = {
+    id: CodecTypes['pg/text@1']['output'];
+    journalEntryId: CodecTypes['pg/text@1']['output'];
+    verseId: CodecTypes['pg/text@1']['output'];
+    segmentId: CodecTypes['pg/text@1']['output'] | null;
+    quoteText: CodecTypes['pg/text@1']['output'];
+    surahRef: CodecTypes['pg/text@1']['output'];
+    createdAt: CodecTypes['pg/timestamptz-temporal@1']['output'];
+    readonly [RelationKeys]?: never;
+  };
+}
+
+export declare const models: {
+  public: {
+    User: Models.public_User;
+    Session: Models.public_Session;
+    Account: Models.public_Account;
+    Verification: Models.public_Verification;
+    UserProfile: Models.public_UserProfile;
+    UserPreference: Models.public_UserPreference;
+    UserLocationPreference: Models.public_UserLocationPreference;
+    PrayerCalculationMethod: Models.public_PrayerCalculationMethod;
+    CityCatalog: Models.public_CityCatalog;
+    PrayerSchedule: Models.public_PrayerSchedule;
+    PrayerLog: Models.public_PrayerLog;
+    JournalTheme: Models.public_JournalTheme;
+    JournalEntry: Models.public_JournalEntry;
+    JournalPrayerReflection: Models.public_JournalPrayerReflection;
+    KhazanahCategory: Models.public_KhazanahCategory;
+    KhazanahVerse: Models.public_KhazanahVerse;
+    KhazanahVerseSegment: Models.public_KhazanahVerseSegment;
+    JournalAttachedVerse: Models.public_JournalAttachedVerse;
+  };
+};
+
 export type TypeMaps = TypeMapsType<
   CodecTypes,
   QueryOperationTypes,
