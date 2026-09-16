@@ -285,17 +285,31 @@ export function getNextPrayerStatus(
 	const isAllCompleteToday =
 		currentPrayerIndex === items.length - 1 && nextPrayerIndex === -1;
 
-	// If before Subuh, current is previous day Isya (or Subuh pending), next is Subuh
-	if (currentPrayerIndex === -1) {
-		currentPrayerIndex = 0;
-		nextPrayerIndex = 0;
-	} else if (nextPrayerIndex === -1) {
-		// After Isya: next prayer is tomorrow Subuh
-		nextPrayerIndex = 0;
-	}
+	let currentPrayer: PrayerTimeItem;
+	let nextPrayer: PrayerTimeItem;
 
-	const currentPrayer = items[currentPrayerIndex];
-	const nextPrayer = items[nextPrayerIndex];
+	// Represent the previous Isya and next Subuh with their actual calendar day.
+	if (currentPrayerIndex === -1) {
+		currentPrayerIndex = items.length - 1;
+		nextPrayerIndex = 0;
+		currentPrayer = {
+			...items[currentPrayerIndex],
+			scheduledAt: new Date(
+				items[currentPrayerIndex].scheduledAt.getTime() - 24 * 60 * 60 * 1000,
+			),
+		};
+		nextPrayer = items[nextPrayerIndex];
+	} else if (nextPrayerIndex === -1) {
+		nextPrayerIndex = 0;
+		currentPrayer = items[currentPrayerIndex];
+		nextPrayer = {
+			...items[nextPrayerIndex],
+			scheduledAt: getNextSubuhAt(schedule),
+		};
+	} else {
+		currentPrayer = items[currentPrayerIndex];
+		nextPrayer = items[nextPrayerIndex];
+	}
 
 	const timeDiffMs = nextPrayer.scheduledAt.getTime() - currentTimeMs;
 	const timeRemainingMinutes = Math.max(
@@ -312,7 +326,59 @@ export function getNextPrayerStatus(
 	};
 }
 
-export type PrayerWindowStatus = "completed" | "active" | "upcoming" | "missed";
+export type PrayerWindowStatus =
+	| "completed-on-time"
+	| "completed-late"
+	| "active"
+	| "upcoming"
+	| "not-logged";
+
+export type PrayerCompletionLookup =
+	| ReadonlySet<PrayerName>
+	| ReadonlyMap<PrayerName, Date | string | null>;
+
+export interface EvaluatePrayerStatusParams {
+	scheduledAt: Date;
+	onTimeWindowEndAt: Date;
+	trackingCutoffAt: Date;
+	completedAt?: Date | string | null;
+	isCompleted?: boolean;
+	referenceDate?: Date;
+}
+
+export function getNextSubuhAt(schedule: DailyPrayerSchedule): Date {
+	const subuh = schedule.items.find((item) => item.id === "subuh");
+	if (!subuh) throw new Error("Prayer schedule is missing Subuh");
+	return new Date(subuh.scheduledAt.getTime() + 24 * 60 * 60 * 1000);
+}
+
+function normalizeCompletionDate(value: Date | string | null | undefined) {
+	if (!value) return null;
+	const date = value instanceof Date ? value : new Date(value);
+	return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function evaluatePrayerStatus({
+	scheduledAt,
+	onTimeWindowEndAt,
+	trackingCutoffAt,
+	completedAt,
+	isCompleted = false,
+	referenceDate = new Date(),
+}: EvaluatePrayerStatusParams): PrayerWindowStatus {
+	const completion = normalizeCompletionDate(completedAt);
+	if (completion || isCompleted) {
+		return !completion || completion.getTime() < onTimeWindowEndAt.getTime()
+			? "completed-on-time"
+			: "completed-late";
+	}
+
+	const referenceMs = referenceDate.getTime();
+	if (referenceMs < scheduledAt.getTime()) return "upcoming";
+	if (referenceMs < onTimeWindowEndAt.getTime()) return "active";
+	if (referenceMs < trackingCutoffAt.getTime()) return "not-logged";
+	return "not-logged";
+}
 
 export interface PrayerStatusDetail {
 	id: PrayerName;
@@ -320,6 +386,7 @@ export interface PrayerStatusDetail {
 	time: string;
 	scheduledAt: Date;
 	windowEndAt: Date;
+	trackingCutoffAt: Date;
 	status: PrayerWindowStatus;
 	statusLabel: string;
 	canTrack: boolean;
@@ -329,58 +396,65 @@ export interface PrayerStatusDetail {
 /**
  * Calculates current tracking window status for each prayer.
  * Rules:
- * - Completed prayers cannot be tracked again.
- * - Future prayers (before scheduledAt) cannot be tracked yet ('upcoming').
- * - Expired prayers (after windowEndAt / next prayer arrival) cannot be tracked ('missed').
- * - Only the current active prayer (scheduledAt <= now < windowEndAt) can be tracked.
+ * A started prayer remains loggable until the next local Subuh. The next
+ * prayer start only changes a later completion from on-time to late.
  */
 export function getPrayerWindowDetails(
 	schedule: DailyPrayerSchedule,
-	completedPrayerNames: Set<PrayerName>,
+	completions: PrayerCompletionLookup,
 	referenceDate: Date = new Date(),
 ): PrayerStatusDetail[] {
 	const items = schedule.items;
 	const refTimeMs = referenceDate.getTime();
+	const trackingCutoffAt = getNextSubuhAt(schedule);
 
 	return items.map((item, index) => {
-		const isCompleted = completedPrayerNames.has(item.id);
+		const isCompletionMap = completions instanceof Map;
+		const completedAt = isCompletionMap ? completions.get(item.id) : null;
+		const isCompleted = completions.has(item.id);
 		const scheduledMs = item.scheduledAt.getTime();
 
 		let windowEndAt: Date;
 		if (index < items.length - 1) {
 			windowEndAt = items[index + 1].scheduledAt;
 		} else {
-			windowEndAt = new Date(
-				items[0].scheduledAt.getTime() + 24 * 60 * 60 * 1000,
-			);
+			windowEndAt = trackingCutoffAt;
 		}
-		const windowEndMs = windowEndAt.getTime();
 
-		let status: PrayerWindowStatus;
+		const status = evaluatePrayerStatus({
+			scheduledAt: item.scheduledAt,
+			onTimeWindowEndAt: windowEndAt,
+			trackingCutoffAt,
+			completedAt,
+			isCompleted,
+			referenceDate,
+		});
 		let statusLabel: string;
-		let canTrack = false;
+		let canTrack =
+			!isCompleted &&
+			refTimeMs >= scheduledMs &&
+			refTimeMs < trackingCutoffAt.getTime();
 		let message: string;
 
-		if (isCompleted) {
-			status = "completed";
-			statusLabel = "Selesai";
+		if (status === "completed-on-time") {
+			statusLabel = "Dicatat Tepat Waktu";
 			canTrack = false;
 			message = `Alhamdulillah, solat ${item.name} telah ditunaikan.`;
-		} else if (refTimeMs < scheduledMs) {
-			status = "upcoming";
+		} else if (status === "completed-late") {
+			statusLabel = "Dicatat Terlambat";
+			canTrack = false;
+			message = `Solat ${item.name} telah dicatat setelah waktu solat berikutnya dimulai.`;
+		} else if (status === "upcoming") {
 			statusLabel = "Belum Masuk Waktu";
-			canTrack = false;
 			message = `Waktu solat ${item.name} belum tiba (mulai pukul ${item.time}).`;
-		} else if (refTimeMs >= windowEndMs) {
-			status = "missed";
-			statusLabel = "Waktu Telah Lewat";
-			canTrack = false;
-			message = `Waktu solat ${item.name} telah berakhir dan terlewat.`;
-		} else {
-			status = "active";
+		} else if (status === "active") {
 			statusLabel = "Telah Tiba";
-			canTrack = true;
 			message = `Waktu solat ${item.name} telah tiba.`;
+		} else {
+			statusLabel = "Belum Dicatat";
+			message = canTrack
+				? `Solat ${item.name} belum dicatat dan masih dapat ditambahkan hingga Subuh berikutnya.`
+				: `Tidak ada catatan solat ${item.name}.`;
 		}
 
 		return {
@@ -389,6 +463,7 @@ export function getPrayerWindowDetails(
 			time: item.time,
 			scheduledAt: item.scheduledAt,
 			windowEndAt,
+			trackingCutoffAt,
 			status,
 			statusLabel,
 			canTrack,

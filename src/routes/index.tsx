@@ -77,14 +77,20 @@ function Home() {
 		return heatmapData.days.map((day, columnIndex) => {
 			const completedPrayers = heatmapData.matrix.reduce((total, row) => {
 				const status = row[columnIndex];
-				return status === 0 || status === 1 || status === 2 ? total + 1 : total;
+				return status === 0 || status === 1 ? total + 1 : total;
 			}, 0);
+			const elapsedPrayers = heatmapData.matrix.reduce(
+				(total, row) => (row[columnIndex] === null ? total : total + 1),
+				0,
+			);
 
 			return {
 				day: day.dayLabel,
-				value: (completedPrayers / 5) * 100,
+				value:
+					elapsedPrayers === 0 ? 0 : (completedPrayers / elapsedPrayers) * 100,
 				date: day.date,
 				completedPrayers,
+				elapsedPrayers,
 				isToday: day.isToday,
 			};
 		});

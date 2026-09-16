@@ -2,11 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, CloudSun, Moon, Sun, Sunrise, Sunset } from "lucide-react";
 import { DonutChart } from "#/components/DonutChart";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
-import { getPrayerHeatmapData } from "#/lib/prayer-heatmap-server";
+import {
+	JOURNAL_FEELING_STYLES,
+	type JournalFeelingStatus,
+} from "#/lib/journal-statistics";
+import { getJournalStatisticsData } from "#/lib/journal-statistics-server";
 
 export const Route = createFileRoute("/journal/complete-statistic")({
 	loader: async () => {
-		return await getPrayerHeatmapData({
+		return await getJournalStatisticsData({
 			data: {},
 		});
 	},
@@ -21,25 +25,14 @@ const PRAYERS = [
 	{ icon: Moon, label: "Isya" },
 ] as const;
 
-type Status = 0 | 1 | 2 | 3;
-
-const STATUS_CLASS: Record<Status, string> = {
-	0: "bg-primary",
-	1: "bg-lime-200",
-	2: "bg-orange-300",
-	3: "bg-cyan-900",
-};
-
-const STATUS_LABELS: { label: string; className: string }[] = [
-	{ label: "Ditunaikan", className: "bg-primary" },
-	{ label: "Terlambat", className: "bg-lime-200" },
-	{ label: "Berat", className: "bg-orange-300" },
-	{ label: "Tertinggal", className: "bg-cyan-900" },
-];
+const FEELING_STATUSES = [1, 2, 3, 4] as const satisfies Exclude<
+	JournalFeelingStatus,
+	null
+>[];
 
 function RouteComponent() {
-	const heatmapData = Route.useLoaderData();
-	const hasFeelingData = heatmapData.totalFeelingLogs > 0;
+	const journalStatistics = Route.useLoaderData();
+	const hasFeelingData = journalStatistics.totalFeelingLogs > 0;
 
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background pb-24">
@@ -52,14 +45,14 @@ function RouteComponent() {
 				Statistik Lengkap
 			</div>
 
-			{/* Prayer Heatmap Matrix */}
+			{/* Journal reflection matrix */}
 			<Card className="mx-4 mt-8">
 				<CardContent className="px-0">
 					<table className="w-full border-collapse">
 						<thead>
 							<tr>
 								<th className="w-14" />
-								{heatmapData.days.map((day) => (
+								{journalStatistics.days.map((day) => (
 									<th key={day.date} className="pb-3 text-center">
 										<div className="flex flex-col items-center">
 											<span
@@ -90,24 +83,20 @@ function RouteComponent() {
 											</span>
 										</div>
 									</td>
-									{heatmapData.matrix[rowIdx].map((status, colIdx) => (
+									{journalStatistics.matrix[rowIdx].map((status, colIdx) => (
 										<td
-											key={`${prayer.label}-${heatmapData.days[colIdx].date}`}
+											key={`${prayer.label}-${journalStatistics.days[colIdx].date}`}
 											className="pb-3 text-center"
 										>
 											{status !== null ? (
 												<div
-													className={`mx-auto h-8 w-8 rounded-xl ${STATUS_CLASS[status]}`}
-													title={`${prayer.label} ${heatmapData.days[colIdx].dayLabel}: ${
-														STATUS_LABELS.find(
-															(s) => s.className === STATUS_CLASS[status],
-														)?.label ?? ""
-													}`}
+													className={`mx-auto h-8 w-8 rounded-xl ${JOURNAL_FEELING_STYLES[status].className}`}
+													title={`${prayer.label} ${journalStatistics.days[colIdx].dayLabel}: ${JOURNAL_FEELING_STYLES[status].label}`}
 												/>
 											) : (
 												<div
 													className="mx-auto h-8 w-8 rounded-xl border border-border/40 border-dashed bg-card/40"
-													title={`${prayer.label} ${heatmapData.days[colIdx].dayLabel}: Belum Tiba`}
+													title={`${prayer.label} ${journalStatistics.days[colIdx].dayLabel}: Belum diisi`}
 												/>
 											)}
 										</td>
@@ -118,11 +107,13 @@ function RouteComponent() {
 					</table>
 
 					<div className="flex flex-wrap items-center justify-center gap-4 pt-1">
-						{STATUS_LABELS.map((s) => (
-							<div key={s.label} className="flex items-center gap-1.5">
-								<div className={`h-3 w-3 rounded-sm ${s.className}`} />
+						{FEELING_STATUSES.map((status) => (
+							<div key={status} className="flex items-center gap-1.5">
+								<div
+									className={`h-3 w-3 rounded-sm ${JOURNAL_FEELING_STYLES[status].className}`}
+								/>
 								<span className="text-[11px] text-muted-foreground">
-									{s.label}
+									{JOURNAL_FEELING_STYLES[status].label}
 								</span>
 							</div>
 						))}
@@ -138,7 +129,7 @@ function RouteComponent() {
 					{hasFeelingData ? (
 						<DonutChart
 							className="mx-auto"
-							data={heatmapData.feelingDistribution}
+							data={journalStatistics.feelingDistribution}
 							size={200}
 							strokeWidth={24}
 							showLegend={true}

@@ -4,6 +4,11 @@ import type {
 	PrayerTimeItem,
 } from "./prayer-calculation";
 import { PRAYER_NAMES } from "./prayer-calculation";
+import {
+	calculateKhusyuAverage,
+	calculateOnTimeRate,
+	isValidLocalDate,
+} from "./statistics";
 import { formatLocalDate, formatLocalTime } from "./timezone";
 
 export const JOURNAL_DRAFT_STORAGE_KEY = "myniyyah_journal_draft";
@@ -13,7 +18,7 @@ export type PunctualityLabel =
 	| "Awal Waktu"
 	| "Tepat Waktu"
 	| "Terlambat"
-	| "Tidak Ditunaikan";
+	| "Belum Dicatat";
 
 export const FEELING_OPTIONS: {
 	label: FeelingLabel;
@@ -47,6 +52,7 @@ export interface PrayerMetric {
 	punctuality: PunctualityLabel;
 	scheduledAt: string | null;
 	completedAtIso: string | null;
+	onTimeWindowEndAt: string | null;
 	prayerLogId: string | null;
 	feelingIndex: number | null;
 	feelingLabel: FeelingLabel | null;
@@ -81,6 +87,20 @@ export interface JournalDraft {
 export interface JournalSummary {
 	khusyuPercentage: number;
 	punctualityPercentage: number;
+	khusyuSampleSize: number;
+	punctualitySampleSize: number;
+}
+
+export type JournalEligibilityReason =
+	| "eligible"
+	| "invalid-date"
+	| "future-date"
+	| "day-in-progress";
+
+export interface JournalEligibility {
+	canCreate: boolean;
+	canEdit: boolean;
+	reason: JournalEligibilityReason;
 }
 
 function normalizeDate(value: string | Date | null | undefined): Date | null {
@@ -110,9 +130,10 @@ export function getJournalDraftFeeling(
 export function calculatePunctuality(
 	completedAt: Date | null,
 	scheduledAt: Date | null,
+	onTimeWindowEndAt: Date | null = null,
 ): { differenceMinutes: number | null; punctuality: PunctualityLabel } {
 	if (!completedAt || !scheduledAt) {
-		return { differenceMinutes: null, punctuality: "Tidak Ditunaikan" };
+		return { differenceMinutes: null, punctuality: "Belum Dicatat" };
 	}
 
 	const differenceMinutes = Math.round(
@@ -122,7 +143,11 @@ export function calculatePunctuality(
 	if (differenceMinutes <= 30) {
 		return { differenceMinutes, punctuality: "Awal Waktu" };
 	}
-	if (differenceMinutes <= 60) {
+	if (
+		(onTimeWindowEndAt &&
+			completedAt.getTime() < onTimeWindowEndAt.getTime()) ||
+		(!onTimeWindowEndAt && differenceMinutes <= 60)
+	) {
 		return { differenceMinutes, punctuality: "Tepat Waktu" };
 	}
 	return { differenceMinutes, punctuality: "Terlambat" };
@@ -133,6 +158,7 @@ export function calculatePrayerMetrics(
 	log?: JournalPrayerLog | null,
 	timezone = "Asia/Jakarta",
 	timezoneAbbreviation = "WIB",
+	onTimeWindowEndAt: Date | null = null,
 ): PrayerMetric {
 	const scheduledAt =
 		normalizeDate(log?.scheduledAt) ?? scheduleItem.scheduledAt;
@@ -141,6 +167,7 @@ export function calculatePrayerMetrics(
 	const { differenceMinutes, punctuality } = calculatePunctuality(
 		completedAt,
 		scheduledAt,
+		onTimeWindowEndAt,
 	);
 	const feeling = getFeelingByScore(log?.feelingScore ?? log?.khusyuScore);
 
@@ -149,12 +176,13 @@ export function calculatePrayerMetrics(
 		adzanAt: `${formatLocalTime(scheduledAt, timezone, ".")} ${timezoneAbbreviation}`,
 		completedAt: completedAt
 			? `${formatLocalTime(completedAt, timezone, ".")} ${timezoneAbbreviation}`
-			: "Belum ditunaikan",
+			: "Belum dicatat",
 		difference: differenceMinutes === null ? "-" : `${differenceMinutes} menit`,
 		differenceMinutes,
 		punctuality,
 		scheduledAt: scheduledAt.toISOString(),
 		completedAtIso: completedAt?.toISOString() ?? null,
+		onTimeWindowEndAt: onTimeWindowEndAt?.toISOString() ?? null,
 		prayerLogId: log?.id ?? null,
 		feelingIndex: feeling ? feeling.score - 1 : null,
 		feelingLabel: feeling?.label ?? null,
@@ -171,13 +199,18 @@ export function calculateDailyPrayerMetrics(
 ): Record<PrayerName, PrayerMetric> {
 	const logsByPrayer = new Map(logs.map((log) => [log.prayerName, log]));
 	return Object.fromEntries(
-		schedule.items.map((item) => [
+		schedule.items.map((item, index) => [
 			item.id,
 			calculatePrayerMetrics(
 				item,
 				logsByPrayer.get(item.id),
 				timezone,
 				timezoneAbbreviation,
+				index < schedule.items.length - 1
+					? schedule.items[index + 1].scheduledAt
+					: new Date(
+							schedule.items[0].scheduledAt.getTime() + 24 * 60 * 60 * 1000,
+						),
 			),
 		]),
 	) as Record<PrayerName, PrayerMetric>;
@@ -186,26 +219,62 @@ export function calculateDailyPrayerMetrics(
 export function calculateJournalSummary(
 	feelings: Partial<Record<PrayerName, JournalDraftFeeling>>,
 	prayerMetrics: Partial<
-		Record<PrayerName, Pick<PrayerMetric, "differenceMinutes">>
+		Record<
+			PrayerName,
+			Pick<PrayerMetric, "scheduledAt" | "completedAtIso" | "onTimeWindowEndAt">
+		>
 	>,
 ): JournalSummary {
-	const totalFeelingScore = PRAYER_NAMES.reduce(
-		(total, prayerName) => total + (feelings[prayerName]?.score ?? 0),
-		0,
+	const khusyu = calculateKhusyuAverage(
+		PRAYER_NAMES.map((prayerName) => ({
+			score: feelings[prayerName]?.score ?? null,
+		})),
 	);
-	const onTimeCount = PRAYER_NAMES.filter((prayerName) => {
-		const diff = prayerMetrics[prayerName]?.differenceMinutes;
-		return typeof diff === "number" && diff <= 60;
-	}).length;
+	const punctuality = calculateOnTimeRate(
+		PRAYER_NAMES.map((prayerName) => ({
+			scheduledAt: prayerMetrics[prayerName]?.scheduledAt,
+			completedAt: prayerMetrics[prayerName]?.completedAtIso,
+			onTimeWindowEndAt: prayerMetrics[prayerName]?.onTimeWindowEndAt,
+		})),
+	);
 
 	return {
-		khusyuPercentage: Math.round(
-			(totalFeelingScore / (PRAYER_NAMES.length * 4)) * 100,
-		),
-		punctualityPercentage: Math.round(
-			(onTimeCount / PRAYER_NAMES.length) * 100,
-		),
+		khusyuPercentage: khusyu.percentage,
+		punctualityPercentage: punctuality.percentage,
+		khusyuSampleSize: khusyu.sampleSize,
+		punctualitySampleSize: punctuality.sampleSize,
 	};
+}
+
+export function getJournalEligibility({
+	journalDate,
+	todayDate,
+	isyaAt,
+	referenceDate = new Date(),
+	isExisting = false,
+}: {
+	journalDate: string;
+	todayDate: string;
+	isyaAt?: Date | string | null;
+	referenceDate?: Date;
+	isExisting?: boolean;
+}): JournalEligibility {
+	if (!isValidLocalDate(journalDate) || !isValidLocalDate(todayDate)) {
+		return { canCreate: false, canEdit: false, reason: "invalid-date" };
+	}
+	if (journalDate > todayDate) {
+		return { canCreate: false, canEdit: false, reason: "future-date" };
+	}
+	if (isExisting) {
+		return { canCreate: false, canEdit: true, reason: "eligible" };
+	}
+	if (journalDate === todayDate) {
+		const isya = normalizeDate(isyaAt);
+		if (!isya || referenceDate.getTime() < isya.getTime()) {
+			return { canCreate: false, canEdit: false, reason: "day-in-progress" };
+		}
+	}
+	return { canCreate: true, canEdit: false, reason: "eligible" };
 }
 
 export function createInitialJournalDraft(
