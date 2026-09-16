@@ -1,0 +1,1972 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.account",
+    "label": "Create table \"account\"",
+    "summary": "Creates table \"account\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "account"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"account\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"account\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"account\"",
+        "sql": "CREATE TABLE \"public\".\"account\" (\n  \"accessToken\" text,\n  \"accessTokenExpiresAt\" timestamptz,\n  \"accountId\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"idToken\" text,\n  \"password\" text,\n  \"providerId\" text NOT NULL,\n  \"refreshToken\" text,\n  \"refreshTokenExpiresAt\" timestamptz,\n  \"scope\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"account\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"account\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.cityCatalog",
+    "label": "Create table \"cityCatalog\"",
+    "summary": "Creates table \"cityCatalog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "cityCatalog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"cityCatalog\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cityCatalog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"cityCatalog\"",
+        "sql": "CREATE TABLE \"public\".\"cityCatalog\" (\n  \"country\" text DEFAULT 'Indonesia' NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"latitude\" float8,\n  \"longitude\" float8,\n  \"name\" text NOT NULL,\n  \"province\" text NOT NULL,\n  \"timezone\" text NOT NULL,\n  \"timezoneOffset\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"cityCatalog\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cityCatalog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.journalAttachedVerse",
+    "label": "Create table \"journalAttachedVerse\"",
+    "summary": "Creates table \"journalAttachedVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "journalAttachedVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"journalAttachedVerse\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"journalAttachedVerse\"",
+        "sql": "CREATE TABLE \"public\".\"journalAttachedVerse\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"journalEntryId\" text NOT NULL,\n  \"quoteText\" text NOT NULL,\n  \"segmentId\" text,\n  \"surahRef\" text NOT NULL,\n  \"verseId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"journalAttachedVerse\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.journalEntry",
+    "label": "Create table \"journalEntry\"",
+    "summary": "Creates table \"journalEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "journalEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"journalEntry\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"journalEntry\"",
+        "sql": "CREATE TABLE \"public\".\"journalEntry\" (\n  \"content\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"journalDate\" text NOT NULL,\n  \"khusyuPercentage\" int4,\n  \"punctualityPercentage\" int4,\n  \"themeId\" text,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"journalEntry\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.journalPrayerReflection",
+    "label": "Create table \"journalPrayerReflection\"",
+    "summary": "Creates table \"journalPrayerReflection\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "journalPrayerReflection"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"journalPrayerReflection\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"journalPrayerReflection\"",
+        "sql": "CREATE TABLE \"public\".\"journalPrayerReflection\" (\n  \"adzanAt\" timestamptz,\n  \"completedAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"differenceMinutes\" int4,\n  \"feeling\" text,\n  \"feelingScore\" int4,\n  \"id\" text NOT NULL,\n  \"journalEntryId\" text NOT NULL,\n  \"khusyuScore\" int4,\n  \"prayerLogId\" text,\n  \"prayerName\" text NOT NULL,\n  \"punctuality\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"journalPrayerReflection\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.journalTheme",
+    "label": "Create table \"journalTheme\"",
+    "summary": "Creates table \"journalTheme\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "journalTheme"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"journalTheme\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalTheme\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"journalTheme\"",
+        "sql": "CREATE TABLE \"public\".\"journalTheme\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"sortOrder\" int4 DEFAULT 0 NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"journalTheme\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalTheme\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.khazanahCategory",
+    "label": "Create table \"khazanahCategory\"",
+    "summary": "Creates table \"khazanahCategory\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "khazanahCategory"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"khazanahCategory\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahCategory\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"khazanahCategory\"",
+        "sql": "CREATE TABLE \"public\".\"khazanahCategory\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"slug\" text NOT NULL,\n  \"sortOrder\" int4 DEFAULT 0 NOT NULL,\n  \"subtitle\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"khazanahCategory\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahCategory\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.khazanahVerse",
+    "label": "Create table \"khazanahVerse\"",
+    "summary": "Creates table \"khazanahVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "khazanahVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"khazanahVerse\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerse\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"khazanahVerse\"",
+        "sql": "CREATE TABLE \"public\".\"khazanahVerse\" (\n  \"arabic\" text NOT NULL,\n  \"categoryId\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"juz\" int4 NOT NULL,\n  \"reference\" text NOT NULL,\n  \"surahName\" text NOT NULL,\n  \"surahNumber\" int4 NOT NULL,\n  \"surahTranslation\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"translation\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"verseNumber\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"khazanahVerse\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerse\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.khazanahVerseSegment",
+    "label": "Create table \"khazanahVerseSegment\"",
+    "summary": "Creates table \"khazanahVerseSegment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "khazanahVerseSegment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"khazanahVerseSegment\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerseSegment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"khazanahVerseSegment\"",
+        "sql": "CREATE TABLE \"public\".\"khazanahVerseSegment\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"position\" int4 NOT NULL,\n  \"text\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"verseId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"khazanahVerseSegment\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerseSegment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.prayerCalculationMethod",
+    "label": "Create table \"prayerCalculationMethod\"",
+    "summary": "Creates table \"prayerCalculationMethod\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "prayerCalculationMethod"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"prayerCalculationMethod\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerCalculationMethod\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"prayerCalculationMethod\"",
+        "sql": "CREATE TABLE \"public\".\"prayerCalculationMethod\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text NOT NULL,\n  \"fajrAngle\" float8,\n  \"id\" text NOT NULL,\n  \"ishaAngle\" float8,\n  \"ishaIntervalMinutes\" int4,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"prayerCalculationMethod\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerCalculationMethod\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.prayerLog",
+    "label": "Create table \"prayerLog\"",
+    "summary": "Creates table \"prayerLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"prayerLog\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"prayerLog\"",
+        "sql": "CREATE TABLE \"public\".\"prayerLog\" (\n  \"completedAt\" timestamptz,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"feeling\" text,\n  \"feelingScore\" int4,\n  \"id\" text NOT NULL,\n  \"khusyuScore\" int4,\n  \"notes\" text,\n  \"prayerDate\" text NOT NULL,\n  \"prayerName\" text NOT NULL,\n  \"scheduledAt\" timestamptz,\n  \"status\" text DEFAULT 'pending' NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"prayerLog\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.prayerSchedule",
+    "label": "Create table \"prayerSchedule\"",
+    "summary": "Creates table \"prayerSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "prayerSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"prayerSchedule\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"prayerSchedule\"",
+        "sql": "CREATE TABLE \"public\".\"prayerSchedule\" (\n  \"calculationMethodId\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"locationKey\" text NOT NULL,\n  \"prayerDate\" text NOT NULL,\n  \"prayerName\" text NOT NULL,\n  \"scheduledAt\" timestamptz NOT NULL,\n  \"timezone\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"prayerSchedule\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.session",
+    "label": "Create table \"session\"",
+    "summary": "Creates table \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"session\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"session\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"session\"",
+        "sql": "CREATE TABLE \"public\".\"session\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"expiresAt\" timestamptz NOT NULL,\n  \"id\" text NOT NULL,\n  \"ipAddress\" text,\n  \"token\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userAgent\" text,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"session\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"session\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.user",
+    "label": "Create table \"user\"",
+    "summary": "Creates table \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"user\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"user\"",
+        "sql": "CREATE TABLE \"public\".\"user\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"emailVerified\" bool DEFAULT false NOT NULL,\n  \"id\" text NOT NULL,\n  \"image\" text,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"user\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.userLocationPreference",
+    "label": "Create table \"userLocationPreference\"",
+    "summary": "Creates table \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"userLocationPreference\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"userLocationPreference\"",
+        "sql": "CREATE TABLE \"public\".\"userLocationPreference\" (\n  \"calculationMethodId\" text NOT NULL,\n  \"cityId\" text,\n  \"cityName\" text NOT NULL,\n  \"country\" text DEFAULT 'Indonesia' NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"latitude\" float8,\n  \"longitude\" float8,\n  \"province\" text,\n  \"source\" text DEFAULT 'manual' NOT NULL,\n  \"timezone\" text NOT NULL,\n  \"timezoneOffset\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"userLocationPreference\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.userPreference",
+    "label": "Create table \"userPreference\"",
+    "summary": "Creates table \"userPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "userPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"userPreference\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"userPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"userPreference\"",
+        "sql": "CREATE TABLE \"public\".\"userPreference\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"journalReminderTime\" text DEFAULT '20:00' NOT NULL,\n  \"notifyJournal\" bool DEFAULT true NOT NULL,\n  \"notifyPrayer\" bool DEFAULT true NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  \"vibrateOnPray\" bool DEFAULT true NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"userPreference\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"userPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.userProfile",
+    "label": "Create table \"userProfile\"",
+    "summary": "Creates table \"userProfile\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "userProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"userProfile\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"userProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"userProfile\"",
+        "sql": "CREATE TABLE \"public\".\"userProfile\" (\n  \"avatarUrl\" text,\n  \"bio\" text,\n  \"cityName\" text,\n  \"country\" text DEFAULT 'Indonesia' NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"phone\" text,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"userProfile\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"userProfile\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.verification",
+    "label": "Create table \"verification\"",
+    "summary": "Creates table \"verification\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "verification"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"verification\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"verification\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"verification\"",
+        "sql": "CREATE TABLE \"public\".\"verification\" (\n  \"createdAt\" timestamptz DEFAULT (now()),\n  \"expiresAt\" timestamptz NOT NULL,\n  \"id\" text NOT NULL,\n  \"identifier\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"value\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"verification\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"verification\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.account.account_providerId_accountId_key",
+    "label": "Add unique constraint on \"account\" (providerId, accountId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "account_providerId_accountId_key",
+        "table": "account"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"account_providerId_accountId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "account_providerId_accountId_key",
+          "public",
+          "\"public\".\"account\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"account_providerId_accountId_key\"",
+        "sql": "ALTER TABLE \"public\".\"account\" ADD CONSTRAINT \"account_providerId_accountId_key\" UNIQUE (\"providerId\", \"accountId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"account_providerId_accountId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "account_providerId_accountId_key",
+          "public",
+          "\"public\".\"account\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.journalAttachedVerse.journalAttachedVerse_journalEntryId_verseId_segmentId_key",
+    "label": "Add unique constraint on \"journalAttachedVerse\" (journalEntryId, verseId, segmentId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "journalAttachedVerse_journalEntryId_verseId_segmentId_key",
+        "table": "journalAttachedVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"journalAttachedVerse_journalEntryId_verseId_segmentId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalAttachedVerse_journalEntryId_verseId_segmentId_key",
+          "public",
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"journalAttachedVerse_journalEntryId_verseId_segmentId_key\"",
+        "sql": "ALTER TABLE \"public\".\"journalAttachedVerse\" ADD CONSTRAINT \"journalAttachedVerse_journalEntryId_verseId_segmentId_key\" UNIQUE (\"journalEntryId\", \"verseId\", \"segmentId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"journalAttachedVerse_journalEntryId_verseId_segmentId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalAttachedVerse_journalEntryId_verseId_segmentId_key",
+          "public",
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.journalEntry.journalEntry_userId_journalDate_key",
+    "label": "Add unique constraint on \"journalEntry\" (userId, journalDate)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "journalEntry_userId_journalDate_key",
+        "table": "journalEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"journalEntry_userId_journalDate_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalEntry_userId_journalDate_key",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"journalEntry_userId_journalDate_key\"",
+        "sql": "ALTER TABLE \"public\".\"journalEntry\" ADD CONSTRAINT \"journalEntry_userId_journalDate_key\" UNIQUE (\"userId\", \"journalDate\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"journalEntry_userId_journalDate_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalEntry_userId_journalDate_key",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.journalPrayerReflection.journalPrayerReflection_journalEntryId_prayerName_key",
+    "label": "Add unique constraint on \"journalPrayerReflection\" (journalEntryId, prayerName)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "journalPrayerReflection_journalEntryId_prayerName_key",
+        "table": "journalPrayerReflection"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"journalPrayerReflection_journalEntryId_prayerName_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalPrayerReflection_journalEntryId_prayerName_key",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"journalPrayerReflection_journalEntryId_prayerName_key\"",
+        "sql": "ALTER TABLE \"public\".\"journalPrayerReflection\" ADD CONSTRAINT \"journalPrayerReflection_journalEntryId_prayerName_key\" UNIQUE (\"journalEntryId\", \"prayerName\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"journalPrayerReflection_journalEntryId_prayerName_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalPrayerReflection_journalEntryId_prayerName_key",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.journalTheme.journalTheme_slug_key",
+    "label": "Add unique constraint on \"journalTheme\" (slug)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "journalTheme_slug_key",
+        "table": "journalTheme"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"journalTheme_slug_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalTheme_slug_key",
+          "public",
+          "\"public\".\"journalTheme\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"journalTheme_slug_key\"",
+        "sql": "ALTER TABLE \"public\".\"journalTheme\" ADD CONSTRAINT \"journalTheme_slug_key\" UNIQUE (\"slug\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"journalTheme_slug_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalTheme_slug_key",
+          "public",
+          "\"public\".\"journalTheme\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.khazanahCategory.khazanahCategory_slug_key",
+    "label": "Add unique constraint on \"khazanahCategory\" (slug)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "khazanahCategory_slug_key",
+        "table": "khazanahCategory"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"khazanahCategory_slug_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "khazanahCategory_slug_key",
+          "public",
+          "\"public\".\"khazanahCategory\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"khazanahCategory_slug_key\"",
+        "sql": "ALTER TABLE \"public\".\"khazanahCategory\" ADD CONSTRAINT \"khazanahCategory_slug_key\" UNIQUE (\"slug\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"khazanahCategory_slug_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "khazanahCategory_slug_key",
+          "public",
+          "\"public\".\"khazanahCategory\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.khazanahVerseSegment.khazanahVerseSegment_verseId_position_key",
+    "label": "Add unique constraint on \"khazanahVerseSegment\" (verseId, position)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "khazanahVerseSegment_verseId_position_key",
+        "table": "khazanahVerseSegment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"khazanahVerseSegment_verseId_position_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "khazanahVerseSegment_verseId_position_key",
+          "public",
+          "\"public\".\"khazanahVerseSegment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"khazanahVerseSegment_verseId_position_key\"",
+        "sql": "ALTER TABLE \"public\".\"khazanahVerseSegment\" ADD CONSTRAINT \"khazanahVerseSegment_verseId_position_key\" UNIQUE (\"verseId\", \"position\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"khazanahVerseSegment_verseId_position_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "khazanahVerseSegment_verseId_position_key",
+          "public",
+          "\"public\".\"khazanahVerseSegment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.prayerLog.prayerLog_userId_prayerDate_prayerName_key",
+    "label": "Add unique constraint on \"prayerLog\" (userId, prayerDate, prayerName)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "prayerLog_userId_prayerDate_prayerName_key",
+        "table": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"prayerLog_userId_prayerDate_prayerName_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prayerLog_userId_prayerDate_prayerName_key",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"prayerLog_userId_prayerDate_prayerName_key\"",
+        "sql": "ALTER TABLE \"public\".\"prayerLog\" ADD CONSTRAINT \"prayerLog_userId_prayerDate_prayerName_key\" UNIQUE (\"userId\", \"prayerDate\", \"prayerName\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"prayerLog_userId_prayerDate_prayerName_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prayerLog_userId_prayerDate_prayerName_key",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.prayerSchedule.prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key",
+    "label": "Add unique constraint on \"prayerSchedule\" (locationKey, prayerDate, prayerName, calculationMethodId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key",
+        "table": "prayerSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key\"",
+        "sql": "ALTER TABLE \"public\".\"prayerSchedule\" ADD CONSTRAINT \"prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key\" UNIQUE (\"locationKey\", \"prayerDate\", \"prayerName\", \"calculationMethodId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.session.session_token_key",
+    "label": "Add unique constraint on \"session\" (token)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "session_token_key",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"session_token_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_token_key",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"session_token_key\"",
+        "sql": "ALTER TABLE \"public\".\"session\" ADD CONSTRAINT \"session_token_key\" UNIQUE (\"token\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"session_token_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_token_key",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_email_key",
+    "label": "Add unique constraint on \"user\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_email_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.userLocationPreference.userLocationPreference_userId_key",
+    "label": "Add unique constraint on \"userLocationPreference\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "userLocationPreference_userId_key",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"userLocationPreference_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userLocationPreference_userId_key",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"userLocationPreference_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"userLocationPreference\" ADD CONSTRAINT \"userLocationPreference_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"userLocationPreference_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userLocationPreference_userId_key",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.userPreference.userPreference_userId_key",
+    "label": "Add unique constraint on \"userPreference\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "userPreference_userId_key",
+        "table": "userPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"userPreference_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userPreference_userId_key",
+          "public",
+          "\"public\".\"userPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"userPreference_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"userPreference\" ADD CONSTRAINT \"userPreference_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"userPreference_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userPreference_userId_key",
+          "public",
+          "\"public\".\"userPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.userProfile.userProfile_userId_key",
+    "label": "Add unique constraint on \"userProfile\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "userProfile_userId_key",
+        "table": "userProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"userProfile_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userProfile_userId_key",
+          "public",
+          "\"public\".\"userProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"userProfile_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"userProfile\" ADD CONSTRAINT \"userProfile_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"userProfile_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userProfile_userId_key",
+          "public",
+          "\"public\".\"userProfile\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.account.account_userId_idx_a489d58a",
+    "label": "Create index \"account_userId_idx_a489d58a\" on \"account\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "account_userId_idx_a489d58a",
+        "table": "account"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"account_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"account_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"account_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"account_userId_idx_a489d58a\" ON \"public\".\"account\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"account_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"account_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.cityCatalog.cityCatalog_name_idx_ce87e6ba",
+    "label": "Create index \"cityCatalog_name_idx_ce87e6ba\" on \"cityCatalog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "cityCatalog_name_idx_ce87e6ba",
+        "table": "cityCatalog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"cityCatalog_name_idx_ce87e6ba\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cityCatalog_name_idx_ce87e6ba\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"cityCatalog_name_idx_ce87e6ba\"",
+        "sql": "CREATE INDEX \"cityCatalog_name_idx_ce87e6ba\" ON \"public\".\"cityCatalog\" (\"name\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"cityCatalog_name_idx_ce87e6ba\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cityCatalog_name_idx_ce87e6ba\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.cityCatalog.cityCatalog_province_idx_c35be1ce",
+    "label": "Create index \"cityCatalog_province_idx_c35be1ce\" on \"cityCatalog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "cityCatalog_province_idx_c35be1ce",
+        "table": "cityCatalog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"cityCatalog_province_idx_c35be1ce\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cityCatalog_province_idx_c35be1ce\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"cityCatalog_province_idx_c35be1ce\"",
+        "sql": "CREATE INDEX \"cityCatalog_province_idx_c35be1ce\" ON \"public\".\"cityCatalog\" (\"province\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"cityCatalog_province_idx_c35be1ce\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"cityCatalog_province_idx_c35be1ce\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.journalAttachedVerse.journalAttachedVerse_verseId_idx_7a94890a",
+    "label": "Create index \"journalAttachedVerse_verseId_idx_7a94890a\" on \"journalAttachedVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "journalAttachedVerse_verseId_idx_7a94890a",
+        "table": "journalAttachedVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"journalAttachedVerse_verseId_idx_7a94890a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalAttachedVerse_verseId_idx_7a94890a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"journalAttachedVerse_verseId_idx_7a94890a\"",
+        "sql": "CREATE INDEX \"journalAttachedVerse_verseId_idx_7a94890a\" ON \"public\".\"journalAttachedVerse\" (\"verseId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"journalAttachedVerse_verseId_idx_7a94890a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalAttachedVerse_verseId_idx_7a94890a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.journalEntry.journalEntry_themeId_idx_c1ca6728",
+    "label": "Create index \"journalEntry_themeId_idx_c1ca6728\" on \"journalEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "journalEntry_themeId_idx_c1ca6728",
+        "table": "journalEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"journalEntry_themeId_idx_c1ca6728\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalEntry_themeId_idx_c1ca6728\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"journalEntry_themeId_idx_c1ca6728\"",
+        "sql": "CREATE INDEX \"journalEntry_themeId_idx_c1ca6728\" ON \"public\".\"journalEntry\" (\"themeId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"journalEntry_themeId_idx_c1ca6728\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalEntry_themeId_idx_c1ca6728\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.journalEntry.journalEntry_userId_journalDate_idx_f0b0472f",
+    "label": "Create index \"journalEntry_userId_journalDate_idx_f0b0472f\" on \"journalEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "journalEntry_userId_journalDate_idx_f0b0472f",
+        "table": "journalEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"journalEntry_userId_journalDate_idx_f0b0472f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalEntry_userId_journalDate_idx_f0b0472f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"journalEntry_userId_journalDate_idx_f0b0472f\"",
+        "sql": "CREATE INDEX \"journalEntry_userId_journalDate_idx_f0b0472f\" ON \"public\".\"journalEntry\" (\"userId\", \"journalDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"journalEntry_userId_journalDate_idx_f0b0472f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalEntry_userId_journalDate_idx_f0b0472f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.journalPrayerReflection.journalPrayerReflection_prayerLogId_idx_b5db581a",
+    "label": "Create index \"journalPrayerReflection_prayerLogId_idx_b5db581a\" on \"journalPrayerReflection\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "journalPrayerReflection_prayerLogId_idx_b5db581a",
+        "table": "journalPrayerReflection"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"journalPrayerReflection_prayerLogId_idx_b5db581a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalPrayerReflection_prayerLogId_idx_b5db581a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"journalPrayerReflection_prayerLogId_idx_b5db581a\"",
+        "sql": "CREATE INDEX \"journalPrayerReflection_prayerLogId_idx_b5db581a\" ON \"public\".\"journalPrayerReflection\" (\"prayerLogId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"journalPrayerReflection_prayerLogId_idx_b5db581a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalPrayerReflection_prayerLogId_idx_b5db581a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.khazanahVerse.khazanahVerse_categoryId_idx_15c304f2",
+    "label": "Create index \"khazanahVerse_categoryId_idx_15c304f2\" on \"khazanahVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "khazanahVerse_categoryId_idx_15c304f2",
+        "table": "khazanahVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"khazanahVerse_categoryId_idx_15c304f2\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerse_categoryId_idx_15c304f2\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"khazanahVerse_categoryId_idx_15c304f2\"",
+        "sql": "CREATE INDEX \"khazanahVerse_categoryId_idx_15c304f2\" ON \"public\".\"khazanahVerse\" (\"categoryId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"khazanahVerse_categoryId_idx_15c304f2\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerse_categoryId_idx_15c304f2\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.khazanahVerse.khazanahVerse_surahNumber_verseNumber_idx_8f1a7652",
+    "label": "Create index \"khazanahVerse_surahNumber_verseNumber_idx_8f1a7652\" on \"khazanahVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "khazanahVerse_surahNumber_verseNumber_idx_8f1a7652",
+        "table": "khazanahVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"khazanahVerse_surahNumber_verseNumber_idx_8f1a7652\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerse_surahNumber_verseNumber_idx_8f1a7652\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"khazanahVerse_surahNumber_verseNumber_idx_8f1a7652\"",
+        "sql": "CREATE INDEX \"khazanahVerse_surahNumber_verseNumber_idx_8f1a7652\" ON \"public\".\"khazanahVerse\" (\"surahNumber\", \"verseNumber\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"khazanahVerse_surahNumber_verseNumber_idx_8f1a7652\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerse_surahNumber_verseNumber_idx_8f1a7652\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.khazanahVerseSegment.khazanahVerseSegment_verseId_idx_7a94890a",
+    "label": "Create index \"khazanahVerseSegment_verseId_idx_7a94890a\" on \"khazanahVerseSegment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "khazanahVerseSegment_verseId_idx_7a94890a",
+        "table": "khazanahVerseSegment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"khazanahVerseSegment_verseId_idx_7a94890a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerseSegment_verseId_idx_7a94890a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"khazanahVerseSegment_verseId_idx_7a94890a\"",
+        "sql": "CREATE INDEX \"khazanahVerseSegment_verseId_idx_7a94890a\" ON \"public\".\"khazanahVerseSegment\" (\"verseId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"khazanahVerseSegment_verseId_idx_7a94890a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"khazanahVerseSegment_verseId_idx_7a94890a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prayerLog.prayerLog_userId_prayerDate_idx_68114342",
+    "label": "Create index \"prayerLog_userId_prayerDate_idx_68114342\" on \"prayerLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prayerLog_userId_prayerDate_idx_68114342",
+        "table": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prayerLog_userId_prayerDate_idx_68114342\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerLog_userId_prayerDate_idx_68114342\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prayerLog_userId_prayerDate_idx_68114342\"",
+        "sql": "CREATE INDEX \"prayerLog_userId_prayerDate_idx_68114342\" ON \"public\".\"prayerLog\" (\"userId\", \"prayerDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prayerLog_userId_prayerDate_idx_68114342\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerLog_userId_prayerDate_idx_68114342\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prayerLog.prayerLog_userId_status_idx_e4a128ba",
+    "label": "Create index \"prayerLog_userId_status_idx_e4a128ba\" on \"prayerLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prayerLog_userId_status_idx_e4a128ba",
+        "table": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prayerLog_userId_status_idx_e4a128ba\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerLog_userId_status_idx_e4a128ba\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prayerLog_userId_status_idx_e4a128ba\"",
+        "sql": "CREATE INDEX \"prayerLog_userId_status_idx_e4a128ba\" ON \"public\".\"prayerLog\" (\"userId\", \"status\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prayerLog_userId_status_idx_e4a128ba\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerLog_userId_status_idx_e4a128ba\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prayerSchedule.prayerSchedule_calculationMethodId_idx_374b57c9",
+    "label": "Create index \"prayerSchedule_calculationMethodId_idx_374b57c9\" on \"prayerSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prayerSchedule_calculationMethodId_idx_374b57c9",
+        "table": "prayerSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prayerSchedule_calculationMethodId_idx_374b57c9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerSchedule_calculationMethodId_idx_374b57c9\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prayerSchedule_calculationMethodId_idx_374b57c9\"",
+        "sql": "CREATE INDEX \"prayerSchedule_calculationMethodId_idx_374b57c9\" ON \"public\".\"prayerSchedule\" (\"calculationMethodId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prayerSchedule_calculationMethodId_idx_374b57c9\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerSchedule_calculationMethodId_idx_374b57c9\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.prayerSchedule.prayerSchedule_prayerDate_idx_329aa935",
+    "label": "Create index \"prayerSchedule_prayerDate_idx_329aa935\" on \"prayerSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "prayerSchedule_prayerDate_idx_329aa935",
+        "table": "prayerSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"prayerSchedule_prayerDate_idx_329aa935\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerSchedule_prayerDate_idx_329aa935\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"prayerSchedule_prayerDate_idx_329aa935\"",
+        "sql": "CREATE INDEX \"prayerSchedule_prayerDate_idx_329aa935\" ON \"public\".\"prayerSchedule\" (\"prayerDate\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"prayerSchedule_prayerDate_idx_329aa935\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"prayerSchedule_prayerDate_idx_329aa935\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.session.session_userId_idx_a489d58a",
+    "label": "Create index \"session_userId_idx_a489d58a\" on \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "session_userId_idx_a489d58a",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"session_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"session_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"session_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"session_userId_idx_a489d58a\" ON \"public\".\"session\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"session_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"session_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.userLocationPreference.userLocationPreference_calculationMethodId_idx_374b57c9",
+    "label": "Create index \"userLocationPreference_calculationMethodId_idx_374b57c9\" on \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "userLocationPreference_calculationMethodId_idx_374b57c9",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"userLocationPreference_calculationMethodId_idx_374b57c9\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"userLocationPreference_calculationMethodId_idx_374b57c9\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"userLocationPreference_calculationMethodId_idx_374b57c9\"",
+        "sql": "CREATE INDEX \"userLocationPreference_calculationMethodId_idx_374b57c9\" ON \"public\".\"userLocationPreference\" (\"calculationMethodId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"userLocationPreference_calculationMethodId_idx_374b57c9\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"userLocationPreference_calculationMethodId_idx_374b57c9\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.verification.verification_identifier_idx_79a0dbb3",
+    "label": "Create index \"verification_identifier_idx_79a0dbb3\" on \"verification\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "verification_identifier_idx_79a0dbb3",
+        "table": "verification"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"verification_identifier_idx_79a0dbb3\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"verification_identifier_idx_79a0dbb3\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"verification_identifier_idx_79a0dbb3\"",
+        "sql": "CREATE INDEX \"verification_identifier_idx_79a0dbb3\" ON \"public\".\"verification\" (\"identifier\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"verification_identifier_idx_79a0dbb3\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"verification_identifier_idx_79a0dbb3\""
+        ]
+      }
+    ]
+  }
+]

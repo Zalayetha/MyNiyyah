@@ -1,0 +1,1721 @@
+[
+  {
+    "id": "foreignKey.session.session_userId_fkey",
+    "label": "Add foreign key \"session_userId_fkey\" on \"session\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "session_userId_fkey",
+        "table": "session"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"session_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_userId_fkey",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"session_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"session\"\nADD CONSTRAINT \"session_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"session_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "session_userId_fkey",
+          "public",
+          "\"public\".\"session\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.account.account_userId_fkey",
+    "label": "Add foreign key \"account_userId_fkey\" on \"account\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "account_userId_fkey",
+        "table": "account"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"account_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "account_userId_fkey",
+          "public",
+          "\"public\".\"account\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"account_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"account\"\nADD CONSTRAINT \"account_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"account_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "account_userId_fkey",
+          "public",
+          "\"public\".\"account\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.userProfile.userProfile_userId_fkey",
+    "label": "Add foreign key \"userProfile_userId_fkey\" on \"userProfile\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "userProfile_userId_fkey",
+        "table": "userProfile"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"userProfile_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userProfile_userId_fkey",
+          "public",
+          "\"public\".\"userProfile\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"userProfile_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"userProfile\"\nADD CONSTRAINT \"userProfile_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"userProfile_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userProfile_userId_fkey",
+          "public",
+          "\"public\".\"userProfile\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.userPreference.userPreference_userId_fkey",
+    "label": "Add foreign key \"userPreference_userId_fkey\" on \"userPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "userPreference_userId_fkey",
+        "table": "userPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"userPreference_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userPreference_userId_fkey",
+          "public",
+          "\"public\".\"userPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"userPreference_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"userPreference\"\nADD CONSTRAINT \"userPreference_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"userPreference_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userPreference_userId_fkey",
+          "public",
+          "\"public\".\"userPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.userLocationPreference.userLocationPreference_userId_fkey",
+    "label": "Add foreign key \"userLocationPreference_userId_fkey\" on \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "userLocationPreference_userId_fkey",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"userLocationPreference_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userLocationPreference_userId_fkey",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"userLocationPreference_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"userLocationPreference\"\nADD CONSTRAINT \"userLocationPreference_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"userLocationPreference_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userLocationPreference_userId_fkey",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.userLocationPreference.userLocationPreference_cityId_fkey",
+    "label": "Add foreign key \"userLocationPreference_cityId_fkey\" on \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "userLocationPreference_cityId_fkey",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"userLocationPreference_cityId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userLocationPreference_cityId_fkey",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"userLocationPreference_cityId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"userLocationPreference\"\nADD CONSTRAINT \"userLocationPreference_cityId_fkey\"\nFOREIGN KEY (\"cityId\")\nREFERENCES \"public\".\"cityCatalog\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"userLocationPreference_cityId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userLocationPreference_cityId_fkey",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.userLocationPreference.userLocationPreference_calculationMethodId_fkey",
+    "label": "Add foreign key \"userLocationPreference_calculationMethodId_fkey\" on \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "userLocationPreference_calculationMethodId_fkey",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"userLocationPreference_calculationMethodId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userLocationPreference_calculationMethodId_fkey",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"userLocationPreference_calculationMethodId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"userLocationPreference\"\nADD CONSTRAINT \"userLocationPreference_calculationMethodId_fkey\"\nFOREIGN KEY (\"calculationMethodId\")\nREFERENCES \"public\".\"prayerCalculationMethod\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"userLocationPreference_calculationMethodId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "userLocationPreference_calculationMethodId_fkey",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.prayerSchedule.prayerSchedule_calculationMethodId_fkey",
+    "label": "Add foreign key \"prayerSchedule_calculationMethodId_fkey\" on \"prayerSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "prayerSchedule_calculationMethodId_fkey",
+        "table": "prayerSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"prayerSchedule_calculationMethodId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prayerSchedule_calculationMethodId_fkey",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"prayerSchedule_calculationMethodId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"prayerSchedule\"\nADD CONSTRAINT \"prayerSchedule_calculationMethodId_fkey\"\nFOREIGN KEY (\"calculationMethodId\")\nREFERENCES \"public\".\"prayerCalculationMethod\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"prayerSchedule_calculationMethodId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prayerSchedule_calculationMethodId_fkey",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.prayerLog.prayerLog_userId_fkey",
+    "label": "Add foreign key \"prayerLog_userId_fkey\" on \"prayerLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "prayerLog_userId_fkey",
+        "table": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"prayerLog_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prayerLog_userId_fkey",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"prayerLog_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"prayerLog\"\nADD CONSTRAINT \"prayerLog_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"prayerLog_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "prayerLog_userId_fkey",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.journalEntry.journalEntry_userId_fkey",
+    "label": "Add foreign key \"journalEntry_userId_fkey\" on \"journalEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "journalEntry_userId_fkey",
+        "table": "journalEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"journalEntry_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalEntry_userId_fkey",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"journalEntry_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"journalEntry\"\nADD CONSTRAINT \"journalEntry_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"journalEntry_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalEntry_userId_fkey",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.journalEntry.journalEntry_themeId_fkey",
+    "label": "Add foreign key \"journalEntry_themeId_fkey\" on \"journalEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "journalEntry_themeId_fkey",
+        "table": "journalEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"journalEntry_themeId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalEntry_themeId_fkey",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"journalEntry_themeId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"journalEntry\"\nADD CONSTRAINT \"journalEntry_themeId_fkey\"\nFOREIGN KEY (\"themeId\")\nREFERENCES \"public\".\"journalTheme\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"journalEntry_themeId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalEntry_themeId_fkey",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.journalPrayerReflection.journalPrayerReflection_journalEntryId_fkey",
+    "label": "Add foreign key \"journalPrayerReflection_journalEntryId_fkey\" on \"journalPrayerReflection\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "journalPrayerReflection_journalEntryId_fkey",
+        "table": "journalPrayerReflection"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"journalPrayerReflection_journalEntryId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalPrayerReflection_journalEntryId_fkey",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"journalPrayerReflection_journalEntryId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"journalPrayerReflection\"\nADD CONSTRAINT \"journalPrayerReflection_journalEntryId_fkey\"\nFOREIGN KEY (\"journalEntryId\")\nREFERENCES \"public\".\"journalEntry\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"journalPrayerReflection_journalEntryId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalPrayerReflection_journalEntryId_fkey",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.journalPrayerReflection.journalPrayerReflection_prayerLogId_fkey",
+    "label": "Add foreign key \"journalPrayerReflection_prayerLogId_fkey\" on \"journalPrayerReflection\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "journalPrayerReflection_prayerLogId_fkey",
+        "table": "journalPrayerReflection"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"journalPrayerReflection_prayerLogId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalPrayerReflection_prayerLogId_fkey",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"journalPrayerReflection_prayerLogId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"journalPrayerReflection\"\nADD CONSTRAINT \"journalPrayerReflection_prayerLogId_fkey\"\nFOREIGN KEY (\"prayerLogId\")\nREFERENCES \"public\".\"prayerLog\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"journalPrayerReflection_prayerLogId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalPrayerReflection_prayerLogId_fkey",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.khazanahVerse.khazanahVerse_categoryId_fkey",
+    "label": "Add foreign key \"khazanahVerse_categoryId_fkey\" on \"khazanahVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "khazanahVerse_categoryId_fkey",
+        "table": "khazanahVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"khazanahVerse_categoryId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "khazanahVerse_categoryId_fkey",
+          "public",
+          "\"public\".\"khazanahVerse\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"khazanahVerse_categoryId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"khazanahVerse\"\nADD CONSTRAINT \"khazanahVerse_categoryId_fkey\"\nFOREIGN KEY (\"categoryId\")\nREFERENCES \"public\".\"khazanahCategory\" (\"id\")\nON DELETE RESTRICT"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"khazanahVerse_categoryId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "khazanahVerse_categoryId_fkey",
+          "public",
+          "\"public\".\"khazanahVerse\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.khazanahVerseSegment.khazanahVerseSegment_verseId_fkey",
+    "label": "Add foreign key \"khazanahVerseSegment_verseId_fkey\" on \"khazanahVerseSegment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "khazanahVerseSegment_verseId_fkey",
+        "table": "khazanahVerseSegment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"khazanahVerseSegment_verseId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "khazanahVerseSegment_verseId_fkey",
+          "public",
+          "\"public\".\"khazanahVerseSegment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"khazanahVerseSegment_verseId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"khazanahVerseSegment\"\nADD CONSTRAINT \"khazanahVerseSegment_verseId_fkey\"\nFOREIGN KEY (\"verseId\")\nREFERENCES \"public\".\"khazanahVerse\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"khazanahVerseSegment_verseId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "khazanahVerseSegment_verseId_fkey",
+          "public",
+          "\"public\".\"khazanahVerseSegment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.journalAttachedVerse.journalAttachedVerse_journalEntryId_fkey",
+    "label": "Add foreign key \"journalAttachedVerse_journalEntryId_fkey\" on \"journalAttachedVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "journalAttachedVerse_journalEntryId_fkey",
+        "table": "journalAttachedVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"journalAttachedVerse_journalEntryId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalAttachedVerse_journalEntryId_fkey",
+          "public",
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"journalAttachedVerse_journalEntryId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"journalAttachedVerse\"\nADD CONSTRAINT \"journalAttachedVerse_journalEntryId_fkey\"\nFOREIGN KEY (\"journalEntryId\")\nREFERENCES \"public\".\"journalEntry\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"journalAttachedVerse_journalEntryId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalAttachedVerse_journalEntryId_fkey",
+          "public",
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.journalAttachedVerse.journalAttachedVerse_verseId_fkey",
+    "label": "Add foreign key \"journalAttachedVerse_verseId_fkey\" on \"journalAttachedVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "journalAttachedVerse_verseId_fkey",
+        "table": "journalAttachedVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"journalAttachedVerse_verseId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalAttachedVerse_verseId_fkey",
+          "public",
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"journalAttachedVerse_verseId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"journalAttachedVerse\"\nADD CONSTRAINT \"journalAttachedVerse_verseId_fkey\"\nFOREIGN KEY (\"verseId\")\nREFERENCES \"public\".\"khazanahVerse\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"journalAttachedVerse_verseId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalAttachedVerse_verseId_fkey",
+          "public",
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.journalAttachedVerse.journalAttachedVerse_segmentId_fkey",
+    "label": "Add foreign key \"journalAttachedVerse_segmentId_fkey\" on \"journalAttachedVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "journalAttachedVerse_segmentId_fkey",
+        "table": "journalAttachedVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"journalAttachedVerse_segmentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalAttachedVerse_segmentId_fkey",
+          "public",
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"journalAttachedVerse_segmentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"journalAttachedVerse\"\nADD CONSTRAINT \"journalAttachedVerse_segmentId_fkey\"\nFOREIGN KEY (\"segmentId\")\nREFERENCES \"public\".\"khazanahVerseSegment\" (\"id\")\nON DELETE SET NULL"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"journalAttachedVerse_segmentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "journalAttachedVerse_segmentId_fkey",
+          "public",
+          "\"public\".\"journalAttachedVerse\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.cityCatalog.valid_city_coordinates_f8ed1647",
+    "label": "Add check constraint \"valid_city_coordinates_f8ed1647\" on \"cityCatalog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_city_coordinates_f8ed1647",
+        "table": "cityCatalog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_city_coordinates_f8ed1647\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_city_coordinates_f8ed1647",
+          "public",
+          "\"public\".\"cityCatalog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_city_coordinates_f8ed1647\"",
+        "sql": "ALTER TABLE \"public\".\"cityCatalog\" ADD CONSTRAINT \"valid_city_coordinates_f8ed1647\" CHECK ((latitude IS NULL AND longitude IS NULL) OR (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_city_coordinates_f8ed1647\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_city_coordinates_f8ed1647",
+          "public",
+          "\"public\".\"cityCatalog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.cityCatalog.valid_city_timezone_d08d6136",
+    "label": "Add check constraint \"valid_city_timezone_d08d6136\" on \"cityCatalog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_city_timezone_d08d6136",
+        "table": "cityCatalog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_city_timezone_d08d6136\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_city_timezone_d08d6136",
+          "public",
+          "\"public\".\"cityCatalog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_city_timezone_d08d6136\"",
+        "sql": "ALTER TABLE \"public\".\"cityCatalog\" ADD CONSTRAINT \"valid_city_timezone_d08d6136\" CHECK (timezone ~ '^[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)+$')"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_city_timezone_d08d6136\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_city_timezone_d08d6136",
+          "public",
+          "\"public\".\"cityCatalog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.cityCatalog.valid_city_timezone_offset_890d833d",
+    "label": "Add check constraint \"valid_city_timezone_offset_890d833d\" on \"cityCatalog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_city_timezone_offset_890d833d",
+        "table": "cityCatalog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_city_timezone_offset_890d833d\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_city_timezone_offset_890d833d",
+          "public",
+          "\"public\".\"cityCatalog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_city_timezone_offset_890d833d\"",
+        "sql": "ALTER TABLE \"public\".\"cityCatalog\" ADD CONSTRAINT \"valid_city_timezone_offset_890d833d\" CHECK (timezoneOffset BETWEEN -14 AND 14)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_city_timezone_offset_890d833d\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_city_timezone_offset_890d833d",
+          "public",
+          "\"public\".\"cityCatalog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.journalEntry.valid_journal_date_12c9aee1",
+    "label": "Add check constraint \"valid_journal_date_12c9aee1\" on \"journalEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_journal_date_12c9aee1",
+        "table": "journalEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_journal_date_12c9aee1\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_journal_date_12c9aee1",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_journal_date_12c9aee1\"",
+        "sql": "ALTER TABLE \"public\".\"journalEntry\" ADD CONSTRAINT \"valid_journal_date_12c9aee1\" CHECK (journalDate ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_journal_date_12c9aee1\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_journal_date_12c9aee1",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.journalEntry.valid_journal_percentages_0c42645e",
+    "label": "Add check constraint \"valid_journal_percentages_0c42645e\" on \"journalEntry\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_journal_percentages_0c42645e",
+        "table": "journalEntry"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_journal_percentages_0c42645e\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_journal_percentages_0c42645e",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_journal_percentages_0c42645e\"",
+        "sql": "ALTER TABLE \"public\".\"journalEntry\" ADD CONSTRAINT \"valid_journal_percentages_0c42645e\" CHECK ((khusyuPercentage IS NULL OR khusyuPercentage BETWEEN 0 AND 100) AND (punctualityPercentage IS NULL OR punctualityPercentage BETWEEN 0 AND 100))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_journal_percentages_0c42645e\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_journal_percentages_0c42645e",
+          "public",
+          "\"public\".\"journalEntry\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.journalPrayerReflection.valid_reflection_prayer_name_e423c318",
+    "label": "Add check constraint \"valid_reflection_prayer_name_e423c318\" on \"journalPrayerReflection\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_reflection_prayer_name_e423c318",
+        "table": "journalPrayerReflection"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_reflection_prayer_name_e423c318\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_reflection_prayer_name_e423c318",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_reflection_prayer_name_e423c318\"",
+        "sql": "ALTER TABLE \"public\".\"journalPrayerReflection\" ADD CONSTRAINT \"valid_reflection_prayer_name_e423c318\" CHECK (prayerName IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_reflection_prayer_name_e423c318\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_reflection_prayer_name_e423c318",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.journalPrayerReflection.valid_reflection_punctuality_2d073994",
+    "label": "Add check constraint \"valid_reflection_punctuality_2d073994\" on \"journalPrayerReflection\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_reflection_punctuality_2d073994",
+        "table": "journalPrayerReflection"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_reflection_punctuality_2d073994\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_reflection_punctuality_2d073994",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_reflection_punctuality_2d073994\"",
+        "sql": "ALTER TABLE \"public\".\"journalPrayerReflection\" ADD CONSTRAINT \"valid_reflection_punctuality_2d073994\" CHECK (punctuality IS NULL OR punctuality IN ('Belum Dicatat', 'Awal Waktu', 'Tepat Waktu', 'Terlambat'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_reflection_punctuality_2d073994\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_reflection_punctuality_2d073994",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.journalPrayerReflection.valid_reflection_scores_3b182229",
+    "label": "Add check constraint \"valid_reflection_scores_3b182229\" on \"journalPrayerReflection\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_reflection_scores_3b182229",
+        "table": "journalPrayerReflection"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_reflection_scores_3b182229\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_reflection_scores_3b182229",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_reflection_scores_3b182229\"",
+        "sql": "ALTER TABLE \"public\".\"journalPrayerReflection\" ADD CONSTRAINT \"valid_reflection_scores_3b182229\" CHECK ((feelingScore IS NULL OR feelingScore BETWEEN 1 AND 4) AND (khusyuScore IS NULL OR khusyuScore BETWEEN 1 AND 4))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_reflection_scores_3b182229\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_reflection_scores_3b182229",
+          "public",
+          "\"public\".\"journalPrayerReflection\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.khazanahVerseSegment.valid_verse_segment_position_4dfe36f4",
+    "label": "Add check constraint \"valid_verse_segment_position_4dfe36f4\" on \"khazanahVerseSegment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_verse_segment_position_4dfe36f4",
+        "table": "khazanahVerseSegment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_verse_segment_position_4dfe36f4\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_verse_segment_position_4dfe36f4",
+          "public",
+          "\"public\".\"khazanahVerseSegment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_verse_segment_position_4dfe36f4\"",
+        "sql": "ALTER TABLE \"public\".\"khazanahVerseSegment\" ADD CONSTRAINT \"valid_verse_segment_position_4dfe36f4\" CHECK (position > 0)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_verse_segment_position_4dfe36f4\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_verse_segment_position_4dfe36f4",
+          "public",
+          "\"public\".\"khazanahVerseSegment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerCalculationMethod.valid_calculation_angles_e7063b9b",
+    "label": "Add check constraint \"valid_calculation_angles_e7063b9b\" on \"prayerCalculationMethod\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_calculation_angles_e7063b9b",
+        "table": "prayerCalculationMethod"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_calculation_angles_e7063b9b\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_calculation_angles_e7063b9b",
+          "public",
+          "\"public\".\"prayerCalculationMethod\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_calculation_angles_e7063b9b\"",
+        "sql": "ALTER TABLE \"public\".\"prayerCalculationMethod\" ADD CONSTRAINT \"valid_calculation_angles_e7063b9b\" CHECK ((fajrAngle IS NULL OR fajrAngle BETWEEN 0 AND 90) AND (ishaAngle IS NULL OR ishaAngle BETWEEN 0 AND 90))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_calculation_angles_e7063b9b\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_calculation_angles_e7063b9b",
+          "public",
+          "\"public\".\"prayerCalculationMethod\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerCalculationMethod.valid_isha_interval_677bc4d5",
+    "label": "Add check constraint \"valid_isha_interval_677bc4d5\" on \"prayerCalculationMethod\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_isha_interval_677bc4d5",
+        "table": "prayerCalculationMethod"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_isha_interval_677bc4d5\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_isha_interval_677bc4d5",
+          "public",
+          "\"public\".\"prayerCalculationMethod\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_isha_interval_677bc4d5\"",
+        "sql": "ALTER TABLE \"public\".\"prayerCalculationMethod\" ADD CONSTRAINT \"valid_isha_interval_677bc4d5\" CHECK (ishaIntervalMinutes IS NULL OR ishaIntervalMinutes BETWEEN 0 AND 1440)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_isha_interval_677bc4d5\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_isha_interval_677bc4d5",
+          "public",
+          "\"public\".\"prayerCalculationMethod\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerLog.valid_prayer_log_date_c09903cf",
+    "label": "Add check constraint \"valid_prayer_log_date_c09903cf\" on \"prayerLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_prayer_log_date_c09903cf",
+        "table": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_prayer_log_date_c09903cf\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_prayer_log_date_c09903cf",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_prayer_log_date_c09903cf\"",
+        "sql": "ALTER TABLE \"public\".\"prayerLog\" ADD CONSTRAINT \"valid_prayer_log_date_c09903cf\" CHECK (prayerDate ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_prayer_log_date_c09903cf\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_prayer_log_date_c09903cf",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerLog.valid_prayer_log_name_e423c318",
+    "label": "Add check constraint \"valid_prayer_log_name_e423c318\" on \"prayerLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_prayer_log_name_e423c318",
+        "table": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_prayer_log_name_e423c318\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_prayer_log_name_e423c318",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_prayer_log_name_e423c318\"",
+        "sql": "ALTER TABLE \"public\".\"prayerLog\" ADD CONSTRAINT \"valid_prayer_log_name_e423c318\" CHECK (prayerName IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_prayer_log_name_e423c318\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_prayer_log_name_e423c318",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerLog.valid_prayer_log_scores_3b182229",
+    "label": "Add check constraint \"valid_prayer_log_scores_3b182229\" on \"prayerLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_prayer_log_scores_3b182229",
+        "table": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_prayer_log_scores_3b182229\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_prayer_log_scores_3b182229",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_prayer_log_scores_3b182229\"",
+        "sql": "ALTER TABLE \"public\".\"prayerLog\" ADD CONSTRAINT \"valid_prayer_log_scores_3b182229\" CHECK ((feelingScore IS NULL OR feelingScore BETWEEN 1 AND 4) AND (khusyuScore IS NULL OR khusyuScore BETWEEN 1 AND 4))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_prayer_log_scores_3b182229\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_prayer_log_scores_3b182229",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerLog.valid_prayer_log_status_23d18405",
+    "label": "Add check constraint \"valid_prayer_log_status_23d18405\" on \"prayerLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_prayer_log_status_23d18405",
+        "table": "prayerLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_prayer_log_status_23d18405\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_prayer_log_status_23d18405",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_prayer_log_status_23d18405\"",
+        "sql": "ALTER TABLE \"public\".\"prayerLog\" ADD CONSTRAINT \"valid_prayer_log_status_23d18405\" CHECK (status IN ('pending', 'completed'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_prayer_log_status_23d18405\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_prayer_log_status_23d18405",
+          "public",
+          "\"public\".\"prayerLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerSchedule.valid_schedule_date_c09903cf",
+    "label": "Add check constraint \"valid_schedule_date_c09903cf\" on \"prayerSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_schedule_date_c09903cf",
+        "table": "prayerSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_schedule_date_c09903cf\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_schedule_date_c09903cf",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_schedule_date_c09903cf\"",
+        "sql": "ALTER TABLE \"public\".\"prayerSchedule\" ADD CONSTRAINT \"valid_schedule_date_c09903cf\" CHECK (prayerDate ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$')"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_schedule_date_c09903cf\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_schedule_date_c09903cf",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerSchedule.valid_schedule_prayer_name_e423c318",
+    "label": "Add check constraint \"valid_schedule_prayer_name_e423c318\" on \"prayerSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_schedule_prayer_name_e423c318",
+        "table": "prayerSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_schedule_prayer_name_e423c318\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_schedule_prayer_name_e423c318",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_schedule_prayer_name_e423c318\"",
+        "sql": "ALTER TABLE \"public\".\"prayerSchedule\" ADD CONSTRAINT \"valid_schedule_prayer_name_e423c318\" CHECK (prayerName IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_schedule_prayer_name_e423c318\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_schedule_prayer_name_e423c318",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.prayerSchedule.valid_schedule_timezone_d08d6136",
+    "label": "Add check constraint \"valid_schedule_timezone_d08d6136\" on \"prayerSchedule\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_schedule_timezone_d08d6136",
+        "table": "prayerSchedule"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_schedule_timezone_d08d6136\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_schedule_timezone_d08d6136",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_schedule_timezone_d08d6136\"",
+        "sql": "ALTER TABLE \"public\".\"prayerSchedule\" ADD CONSTRAINT \"valid_schedule_timezone_d08d6136\" CHECK (timezone ~ '^[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)+$')"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_schedule_timezone_d08d6136\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_schedule_timezone_d08d6136",
+          "public",
+          "\"public\".\"prayerSchedule\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.userLocationPreference.valid_location_coordinates_f8ed1647",
+    "label": "Add check constraint \"valid_location_coordinates_f8ed1647\" on \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_location_coordinates_f8ed1647",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_location_coordinates_f8ed1647\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_location_coordinates_f8ed1647",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_location_coordinates_f8ed1647\"",
+        "sql": "ALTER TABLE \"public\".\"userLocationPreference\" ADD CONSTRAINT \"valid_location_coordinates_f8ed1647\" CHECK ((latitude IS NULL AND longitude IS NULL) OR (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_location_coordinates_f8ed1647\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_location_coordinates_f8ed1647",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.userLocationPreference.valid_location_source_8fa376db",
+    "label": "Add check constraint \"valid_location_source_8fa376db\" on \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_location_source_8fa376db",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_location_source_8fa376db\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_location_source_8fa376db",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_location_source_8fa376db\"",
+        "sql": "ALTER TABLE \"public\".\"userLocationPreference\" ADD CONSTRAINT \"valid_location_source_8fa376db\" CHECK (source IN ('manual', 'auto'))"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_location_source_8fa376db\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_location_source_8fa376db",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.userLocationPreference.valid_location_timezone_d08d6136",
+    "label": "Add check constraint \"valid_location_timezone_d08d6136\" on \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_location_timezone_d08d6136",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_location_timezone_d08d6136\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_location_timezone_d08d6136",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_location_timezone_d08d6136\"",
+        "sql": "ALTER TABLE \"public\".\"userLocationPreference\" ADD CONSTRAINT \"valid_location_timezone_d08d6136\" CHECK (timezone ~ '^[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)+$')"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_location_timezone_d08d6136\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_location_timezone_d08d6136",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "checkConstraint.userLocationPreference.valid_location_timezone_offset_890d833d",
+    "label": "Add check constraint \"valid_location_timezone_offset_890d833d\" on \"userLocationPreference\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "checkConstraint",
+        "name": "valid_location_timezone_offset_890d833d",
+        "table": "userLocationPreference"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"valid_location_timezone_offset_890d833d\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_location_timezone_offset_890d833d",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add check constraint \"valid_location_timezone_offset_890d833d\"",
+        "sql": "ALTER TABLE \"public\".\"userLocationPreference\" ADD CONSTRAINT \"valid_location_timezone_offset_890d833d\" CHECK (timezoneOffset BETWEEN -14 AND 14)"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"valid_location_timezone_offset_890d833d\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "valid_location_timezone_offset_890d833d",
+          "public",
+          "\"public\".\"userLocationPreference\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.journalAttachedVerse.journalAttachedVerse_unique_normalized_segment",
+    "label": "Create index \"journalAttachedVerse_unique_normalized_segment\" on \"journalAttachedVerse\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "journalAttachedVerse_unique_normalized_segment",
+        "table": "journalAttachedVerse"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"journalAttachedVerse_unique_normalized_segment\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalAttachedVerse_unique_normalized_segment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"journalAttachedVerse_unique_normalized_segment\"",
+        "sql": "CREATE UNIQUE INDEX \"journalAttachedVerse_unique_normalized_segment\" ON \"public\".\"journalAttachedVerse\" (\"journalEntryId\", \"verseId\", COALESCE(\"segmentId\", ''))",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"journalAttachedVerse_unique_normalized_segment\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"journalAttachedVerse_unique_normalized_segment\""
+        ]
+      }
+    ]
+  }
+]
