@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { pool } from "./db";
+import { setPrivateCacheControl } from "./cache";
 import {
 	calculateDailyPrayerMetrics,
 	calculateJournalSummary,
@@ -14,11 +15,25 @@ import {
 	PRAYER_NAMES,
 	type PrayerName,
 } from "./prayer-calculation";
+import { db } from "./prisma";
+import {
+	notFoundError,
+	unauthorizedError,
+	validationError,
+} from "./server-errors";
+import {
+	parseId,
+	parseIsoDate,
+	parsePrayerName,
+	parseText,
+	parseTimezone,
+} from "./server-validation";
 import { getCurrentSession } from "./session";
 import {
 	formatLocalDate,
 	getTimezoneAbbreviation,
 	getTimezoneOffsetHours,
+	toTemporalInstant,
 } from "./timezone";
 
 const DEFAULT_JAKARTA_PREF = {
@@ -67,15 +82,15 @@ export interface JournalThemeEntriesData {
 
 function normalizeJournalDate(value?: string | null): string | null {
 	if (!value) return null;
-	return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
+	try {
+		return parseIsoDate(value, "journalDate");
+	} catch {
+		return null;
+	}
 }
 
 function normalizePrayerName(value: string): PrayerName {
-	const normalized = value.toLowerCase().trim();
-	if (!PRAYER_NAMES.includes(normalized as PrayerName)) {
-		throw new Error(`Invalid prayer name: ${value}`);
-	}
-	return normalized as PrayerName;
+	return parsePrayerName(value);
 }
 
 function toDbFeeling(feeling: string): string {
@@ -92,41 +107,42 @@ function hasIsyaTimeArrived(schedule: DailyPrayerSchedule, now = new Date()) {
 }
 
 async function getUserLocationPreference(userId: string) {
-	const prefResult = await pool.query(
-		`SELECT * FROM "userLocationPreference" WHERE "userId" = $1`,
-		[userId],
+	return (
+		(await db.orm.public.UserLocationPreference.where({ userId }).first()) ??
+		DEFAULT_JAKARTA_PREF
 	);
-	return prefResult.rows[0] ?? DEFAULT_JAKARTA_PREF;
 }
 
 async function getThemesWithCounts(
 	userId: string,
 ): Promise<JournalThemeOption[]> {
-	const result = await pool.query(
-		`SELECT
-			t.id,
-			t.slug,
-			t.title,
-			COUNT(e.id)::int AS count
-		 FROM "journalTheme" t
-		 LEFT JOIN "journalEntry" e
-			ON e."themeId" = t.id AND e."userId" = $1
-		 GROUP BY t.id, t.slug, t.title, t."sortOrder"
-		 ORDER BY t."sortOrder" ASC, t.title ASC`,
-		[userId],
-	);
-
-	return result.rows.map((row) => ({
-		id: row.id,
-		slug: row.slug,
-		title: row.title,
-		count: Number(row.count ?? 0),
-	}));
+	const [themes, entries] = await Promise.all([
+		db.orm.public.JournalTheme.select("id", "slug", "title", "sortOrder").all(),
+		db.orm.public.JournalEntry.where({ userId }).select("themeId").all(),
+	]);
+	const counts = new Map<string, number>();
+	for (const entry of entries) {
+		if (entry.themeId)
+			counts.set(entry.themeId, (counts.get(entry.themeId) ?? 0) + 1);
+	}
+	return themes
+		.sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title))
+		.map((row) => ({
+			id: row.id,
+			slug: row.slug,
+			title: row.title,
+			count: counts.get(row.id) ?? 0,
+		}));
 }
 
 export const getJournalInitialData = createServerFn({ method: "GET" })
 	.validator(
-		(input: { journalDate?: string; timezone?: string } | undefined) => input,
+		(input: { journalDate?: string; timezone?: string } | undefined) => {
+			if (!input) return undefined;
+			if (input.journalDate) parseIsoDate(input.journalDate, "journalDate");
+			if (input.timezone) parseTimezone(input.timezone, "timezone");
+			return input;
+		},
 	)
 	.handler(async ({ data }): Promise<JournalInitialData> => {
 		const session = await getCurrentSession();
@@ -136,10 +152,13 @@ export const getJournalInitialData = createServerFn({ method: "GET" })
 				search: { redirect: "/journal/daily-journal/create" },
 			});
 		}
+		setPrivateCacheControl();
 
 		const userId = session.user.id;
 		const pref = await getUserLocationPreference(userId);
-		const timezone = data?.timezone?.trim() || pref.timezone || "Asia/Jakarta";
+		const timezone = data?.timezone
+			? parseTimezone(data.timezone)
+			: pref.timezone || "Asia/Jakarta";
 		const timezoneOffset =
 			typeof pref.timezoneOffset === "number"
 				? pref.timezoneOffset
@@ -156,21 +175,36 @@ export const getJournalInitialData = createServerFn({ method: "GET" })
 			calculationMethodId: pref.calculationMethodId ?? "kemenag",
 		});
 
-		const logsResult = await pool.query(
-			`SELECT id, "prayerName", "scheduledAt", "completedAt", status, feeling, "feelingScore", "khusyuScore"
-			 FROM "prayerLog"
-			 WHERE "userId" = $1 AND "prayerDate" = $2`,
-			[userId, journalDate],
+		const logRows = await db.orm.public.PrayerLog.where({
+			userId,
+			prayerDate: journalDate,
+		})
+			.select("id", "prayerName", "scheduledAt", "completedAt", "status")
+			.all();
+		const journalEntry = await db.orm.public.JournalEntry.where({
+			userId,
+			journalDate,
+		}).first();
+		const reflectionRows = journalEntry
+			? await db.orm.public.JournalPrayerReflection.where({
+					journalEntryId: journalEntry.id,
+				})
+					.select("prayerName", "feeling", "feelingScore", "khusyuScore")
+					.all()
+			: [];
+		const reflectionsByPrayer = new Map(
+			reflectionRows.map((row) => [row.prayerName, row]),
 		);
-		const logs = logsResult.rows.map((row) => ({
+		const logs = logRows.map((row) => ({
 			id: row.id,
 			prayerName: normalizePrayerName(row.prayerName),
 			scheduledAt: row.scheduledAt,
 			completedAt: row.completedAt,
 			status: row.status,
-			feeling: row.feeling,
-			feelingScore: row.feelingScore,
-			khusyuScore: row.khusyuScore,
+			feeling: reflectionsByPrayer.get(row.prayerName)?.feeling ?? null,
+			feelingScore:
+				reflectionsByPrayer.get(row.prayerName)?.feelingScore ?? null,
+			khusyuScore: reflectionsByPrayer.get(row.prayerName)?.khusyuScore ?? null,
 		}));
 		const timezoneAbbreviation = getTimezoneAbbreviation(
 			timezone,
@@ -205,11 +239,14 @@ export const getJournalCategoryCounts = createServerFn({
 			search: { redirect: "/journal/daily-journal" },
 		});
 	}
+	setPrivateCacheControl();
 	return await getThemesWithCounts(session.user.id);
 });
 
 export const getJournalThemeEntries = createServerFn({ method: "GET" })
-	.validator((input: { themeId: string }) => input)
+	.validator((input: { themeId: string }) => ({
+		themeId: parseId(input?.themeId, "themeId"),
+	}))
 	.handler(async ({ data }): Promise<JournalThemeEntriesData> => {
 		const session = await getCurrentSession();
 		if (!session?.user) {
@@ -218,60 +255,64 @@ export const getJournalThemeEntries = createServerFn({ method: "GET" })
 				search: { redirect: `/journal/daily-journal/theme/${data.themeId}` },
 			});
 		}
+		setPrivateCacheControl();
 
 		const userId = session.user.id;
-		const themeResult = await pool.query(
-			`SELECT
-				t.id,
-				t.slug,
-				t.title,
-				COUNT(e.id)::int AS count
-			 FROM "journalTheme" t
-			 LEFT JOIN "journalEntry" e
-				ON e."themeId" = t.id AND e."userId" = $2
-			 WHERE t.id = $1 OR t.slug = $1
-			 GROUP BY t.id, t.slug, t.title, t."sortOrder"
-			 LIMIT 1`,
-			[data.themeId, userId],
-		);
-		const theme = themeResult.rows[0]
+		const themeRow =
+			(await db.orm.public.JournalTheme.where({ id: data.themeId }).first()) ??
+			(await db.orm.public.JournalTheme.where({ slug: data.themeId }).first());
+		const themeEntries = themeRow
+			? await db.orm.public.JournalEntry.where({ userId, themeId: themeRow.id })
+					.select(
+						"id",
+						"title",
+						"content",
+						"journalDate",
+						"khusyuPercentage",
+						"punctualityPercentage",
+						"updatedAt",
+					)
+					.all()
+			: [];
+		const attachedCounts = new Map<string, number>();
+		if (themeEntries.length) {
+			const attached = await db.orm.public.JournalAttachedVerse.where((verse) =>
+				verse.journalEntryId.in(themeEntries.map((entry) => entry.id)),
+			)
+				.select("journalEntryId")
+				.all();
+			for (const verse of attached)
+				attachedCounts.set(
+					verse.journalEntryId,
+					(attachedCounts.get(verse.journalEntryId) ?? 0) + 1,
+				);
+		}
+		const theme = themeRow
 			? {
-					id: themeResult.rows[0].id,
-					slug: themeResult.rows[0].slug,
-					title: themeResult.rows[0].title,
-					count: Number(themeResult.rows[0].count ?? 0),
+					id: themeRow.id,
+					slug: themeRow.slug,
+					title: themeRow.title,
+					count: themeEntries.length,
 				}
 			: null;
 
-		const entriesResult = await pool.query(
-			`SELECT
-				e.id,
-				e.title,
-				e.content,
-				e."journalDate",
-				e."khusyuPercentage",
-				e."punctualityPercentage",
-				COUNT(a.id)::int AS "attachedVerseCount"
-			 FROM "journalEntry" e
-			 LEFT JOIN "journalAttachedVerse" a ON a."journalEntryId" = e.id
-			 WHERE e."userId" = $1
-				AND ($2::text IS NULL OR e."themeId" = $2)
-			 GROUP BY e.id
-			 ORDER BY e."journalDate" DESC, e."updatedAt" DESC`,
-			[userId, theme?.id ?? null],
-		);
-
 		return {
 			theme,
-			entries: entriesResult.rows.map((row) => ({
-				id: row.id,
-				title: row.title,
-				content: row.content,
-				journalDate: row.journalDate,
-				khusyuPercentage: row.khusyuPercentage,
-				punctualityPercentage: row.punctualityPercentage,
-				attachedVerseCount: Number(row.attachedVerseCount ?? 0),
-			})),
+			entries: themeEntries
+				.sort(
+					(a, b) =>
+						b.journalDate.localeCompare(a.journalDate) ||
+						b.updatedAt.getTime() - a.updatedAt.getTime(),
+				)
+				.map((row) => ({
+					id: row.id,
+					title: row.title,
+					content: row.content,
+					journalDate: row.journalDate,
+					khusyuPercentage: row.khusyuPercentage,
+					punctualityPercentage: row.punctualityPercentage,
+					attachedVerseCount: attachedCounts.get(row.id) ?? 0,
+				})),
 		};
 	});
 
@@ -279,11 +320,32 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 	.validator((input: JournalDraft) => input)
 	.handler(async ({ data }) => {
 		const session = await getCurrentSession();
-		if (!session?.user) throw new Error("Unauthorized");
+		if (!session?.user) throw unauthorizedError();
+		setPrivateCacheControl();
 
 		const userId = session.user.id;
 		const journalDate = normalizeJournalDate(data.journalDate);
-		if (!journalDate) throw new Error("Invalid journal date");
+		if (!journalDate) throw validationError("journalDate is invalid.");
+		const themeId =
+			data.themeId === null ? null : parseId(data.themeId, "themeId");
+		const title = parseText(data.title, "title", 160) || "Muhasabah Harian";
+		const content = parseText(data.content, "content", 20_000);
+		if (!Array.isArray(data.feelings) && typeof data.feelings !== "object") {
+			throw validationError("feelings is invalid.");
+		}
+		if (
+			!Array.isArray(data.attachedVerses) ||
+			data.attachedVerses.length > 20
+		) {
+			throw validationError("attachedVerses is invalid.");
+		}
+		for (const verse of data.attachedVerses) {
+			parseId(verse.verseId, "verseId");
+			if (verse.segmentId !== null && verse.segmentId !== undefined)
+				parseId(verse.segmentId, "segmentId");
+			parseText(verse.quoteText, "quoteText", 5_000, { required: true });
+			parseText(verse.surahRef, "surahRef", 160, { required: true });
+		}
 
 		const initialData = await getJournalInitialData({
 			data: { journalDate },
@@ -298,44 +360,32 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 			data.feelings,
 			initialData.prayerMetrics,
 		);
-		const title = data.title.trim() || "Muhasabah Harian";
-		const content = data.content.trim();
-
-		const client = await pool.connect();
-		try {
-			await client.query("BEGIN");
-
-			const entryResult = await client.query(
-				`INSERT INTO "journalEntry" (
-					id, "userId", "journalDate", "themeId", title, content,
-					"khusyuPercentage", "punctualityPercentage", "createdAt", "updatedAt"
-				) VALUES (
-					gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, now(), now()
-				)
-				ON CONFLICT ("userId", "journalDate") DO UPDATE SET
-					"themeId" = EXCLUDED."themeId",
-					title = EXCLUDED.title,
-					content = EXCLUDED.content,
-					"khusyuPercentage" = EXCLUDED."khusyuPercentage",
-					"punctualityPercentage" = EXCLUDED."punctualityPercentage",
-					"updatedAt" = now()
-				RETURNING id`,
-				[
+		const journalEntryId = await db.transaction(async (tx) => {
+			const entry = await tx.orm.public.JournalEntry.where({
+				userId,
+				journalDate,
+			}).upsert({
+				create: {
+					id: randomUUID(),
 					userId,
 					journalDate,
-					data.themeId,
+					themeId,
 					title,
 					content,
-					summary.khusyuPercentage,
-					summary.punctualityPercentage,
-				],
-			);
-			const journalEntryId = entryResult.rows[0].id as string;
-
-			await client.query(
-				`DELETE FROM "journalPrayerReflection" WHERE "journalEntryId" = $1`,
-				[journalEntryId],
-			);
+					khusyuPercentage: summary.khusyuPercentage,
+					punctualityPercentage: summary.punctualityPercentage,
+				},
+				update: {
+					themeId,
+					title,
+					content,
+					khusyuPercentage: summary.khusyuPercentage,
+					punctualityPercentage: summary.punctualityPercentage,
+				},
+			});
+			await tx.orm.public.JournalPrayerReflection.where({
+				journalEntryId: entry.id,
+			}).delete();
 
 			for (const prayerName of PRAYER_NAMES) {
 				const metric = initialData.prayerMetrics[prayerName];
@@ -343,90 +393,113 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 				const scheduleItem = initialData.schedule.items.find(
 					(item) => item.id === prayerName,
 				);
-				const prayerLogResult = await client.query(
-					`INSERT INTO "prayerLog" (
-						id, "userId", "prayerDate", "prayerName", "scheduledAt",
-						feeling, "feelingScore", "khusyuScore", "createdAt", "updatedAt"
-					) VALUES (
-						gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, now(), now()
-					)
-					ON CONFLICT ("userId", "prayerDate", "prayerName") DO UPDATE SET
-						"scheduledAt" = COALESCE("prayerLog"."scheduledAt", EXCLUDED."scheduledAt"),
-						feeling = EXCLUDED.feeling,
-						"feelingScore" = EXCLUDED."feelingScore",
-						"khusyuScore" = EXCLUDED."khusyuScore",
-						"updatedAt" = now()
-					RETURNING id`,
-					[
+				const prayerLog = await tx.orm.public.PrayerLog.where({
+					userId,
+					prayerDate: journalDate,
+					prayerName,
+				}).upsert({
+					create: {
+						id: randomUUID(),
 						userId,
-						journalDate,
+						prayerDate: journalDate,
 						prayerName,
-						scheduleItem?.scheduledAt ?? null,
-						feeling ? toDbFeeling(feeling.feelingLabel) : null,
-						feeling?.score ?? null,
-						feeling?.khusyuScore ?? null,
-					],
-				);
-				const prayerLogId = prayerLogResult.rows[0]?.id ?? metric.prayerLogId;
+						scheduledAt: toTemporalInstant(scheduleItem?.scheduledAt),
+					},
+					update: { scheduledAt: toTemporalInstant(scheduleItem?.scheduledAt) },
+				});
 
-				await client.query(
-					`INSERT INTO "journalPrayerReflection" (
-						id, "journalEntryId", "prayerLogId", "prayerName", "adzanAt",
-						"completedAt", "differenceMinutes", punctuality, feeling,
-						"feelingScore", "khusyuScore", "createdAt", "updatedAt"
-					) VALUES (
-						gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, now(), now()
-					)`,
-					[
-						journalEntryId,
-						prayerLogId,
-						prayerName,
-						metric.scheduledAt,
-						metric.completedAtIso,
-						metric.differenceMinutes,
-						metric.punctuality,
-						feeling ? toDbFeeling(feeling.feelingLabel) : null,
-						feeling?.score ?? null,
-						feeling?.khusyuScore ?? null,
-					],
-				);
+				await tx.orm.public.JournalPrayerReflection.create({
+					id: randomUUID(),
+					journalEntryId: entry.id,
+					prayerLogId: prayerLog.id ?? metric.prayerLogId,
+					prayerName,
+					adzanAt: toTemporalInstant(metric.scheduledAt),
+					completedAt: toTemporalInstant(metric.completedAtIso),
+					differenceMinutes: metric.differenceMinutes,
+					punctuality: metric.punctuality,
+					feeling: feeling ? toDbFeeling(feeling.feelingLabel) : null,
+					feelingScore: feeling?.score ?? null,
+					khusyuScore: feeling?.khusyuScore ?? null,
+				});
 			}
 
-			await client.query(
-				`DELETE FROM "journalAttachedVerse" WHERE "journalEntryId" = $1`,
-				[journalEntryId],
-			);
+			await tx.orm.public.JournalAttachedVerse.where({
+				journalEntryId: entry.id,
+			}).delete();
 
 			for (const verse of data.attachedVerses) {
-				await client.query(
-					`INSERT INTO "journalAttachedVerse" (
-						id, "journalEntryId", "verseId", "segmentId", "quoteText", "surahRef", "createdAt"
-					) VALUES (
-						gen_random_uuid()::text, $1, $2, $3, $4, $5, now()
-					)
-					ON CONFLICT ("journalEntryId", "verseId", "segmentId") DO UPDATE SET
-						"quoteText" = EXCLUDED."quoteText",
-						"surahRef" = EXCLUDED."surahRef"`,
-					[
-						journalEntryId,
-						verse.verseId,
-						verse.segmentId ?? null,
-						verse.quoteText,
-						verse.surahRef,
-					],
-				);
+				await tx.orm.public.JournalAttachedVerse.create({
+					id: randomUUID(),
+					journalEntryId: entry.id,
+					verseId: verse.verseId,
+					segmentId: verse.segmentId ?? null,
+					quoteText: verse.quoteText,
+					surahRef: verse.surahRef,
+				});
 			}
+			return entry.id;
+		});
 
-			await client.query("COMMIT");
-			return {
-				success: true,
-				journalId: journalEntryId,
-				...summary,
-			};
-		} catch (error) {
-			await client.query("ROLLBACK");
-			throw error;
-		} finally {
-			client.release();
+		return {
+			success: true,
+			journalId: journalEntryId,
+			...summary,
+		};
+	});
+
+export const getJournalEntryById = createServerFn({ method: "GET" })
+	.validator((input: { entryId: string }) => ({
+		entryId: parseId(input?.entryId, "entryId"),
+	}))
+	.handler(async ({ data }) => {
+		const session = await getCurrentSession();
+		if (!session?.user) throw unauthorizedError();
+		setPrivateCacheControl();
+
+		const entry = await db.orm.public.JournalEntry.where({
+			id: data.entryId,
+			userId: session.user.id,
+		}).first();
+
+		if (!entry) {
+			throw notFoundError("Journal entry not found");
 		}
+
+		const [reflections, attachedVerses] = await Promise.all([
+			db.orm.public.JournalPrayerReflection.where({
+				journalEntryId: entry.id,
+			}).all(),
+			db.orm.public.JournalAttachedVerse.where({
+				journalEntryId: entry.id,
+			}).all(),
+		]);
+
+		return {
+			entry,
+			reflections,
+			attachedVerses,
+		};
+	});
+
+export const deleteJournalEntryAction = createServerFn({ method: "POST" })
+	.validator((input: { entryId: string }) => ({
+		entryId: parseId(input?.entryId, "entryId"),
+	}))
+	.handler(async ({ data }) => {
+		const session = await getCurrentSession();
+		if (!session?.user) throw unauthorizedError();
+		setPrivateCacheControl();
+
+		const entry = await db.orm.public.JournalEntry.where({
+			id: data.entryId,
+			userId: session.user.id,
+		}).first();
+
+		if (!entry) {
+			throw notFoundError("Journal entry not found");
+		}
+
+		await db.orm.public.JournalEntry.where({ id: entry.id }).delete();
+
+		return { success: true };
 	});

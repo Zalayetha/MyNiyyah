@@ -1,29 +1,44 @@
+import { randomUUID } from "node:crypto";
 import { betterAuth } from "better-auth";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { pool } from "./db";
 import { getServerEnvironment } from "./env";
+import { authPool, db } from "./prisma";
 
 async function bootstrapUser(userId: string) {
-	await pool.query(
-		`INSERT INTO "userProfile" (id, "userId", country, "createdAt", "updatedAt")
-		 VALUES (gen_random_uuid()::text, $1, 'Indonesia', now(), now())
-		 ON CONFLICT ("userId") DO NOTHING`,
-		[userId],
-	);
-
-	await pool.query(
-		`INSERT INTO "userPreference" (id, "userId", "notifyPrayer", "notifyJournal", "vibrateOnPray", "journalReminderTime", "createdAt", "updatedAt")
-		 VALUES (gen_random_uuid()::text, $1, true, true, true, '20:00', now(), now())
-		 ON CONFLICT ("userId") DO NOTHING`,
-		[userId],
-	);
-
-	await pool.query(
-		`INSERT INTO "userLocationPreference" (id, "userId", "cityId", "cityName", province, country, latitude, longitude, timezone, "timezoneOffset", "calculationMethodId", source, "createdAt", "updatedAt")
-		 VALUES (gen_random_uuid()::text, $1, 'jkt', 'Jakarta Pusat', 'DKI Jakarta', 'Indonesia', -6.2088, 106.8456, 'Asia/Jakarta', 7, 'kemenag', 'manual', now(), now())
-		 ON CONFLICT ("userId") DO NOTHING`,
-		[userId],
-	);
+	await db.transaction(async (tx) => {
+		await tx.orm.public.UserProfile.where({ userId }).upsert({
+			create: { id: randomUUID(), userId, country: "Indonesia" },
+			update: {},
+		});
+		await tx.orm.public.UserPreference.where({ userId }).upsert({
+			create: {
+				id: randomUUID(),
+				userId,
+				notifyPrayer: true,
+				notifyJournal: true,
+				vibrateOnPray: true,
+				journalReminderTime: "20:00",
+			},
+			update: {},
+		});
+		await tx.orm.public.UserLocationPreference.where({ userId }).upsert({
+			create: {
+				id: randomUUID(),
+				userId,
+				cityId: "jkt",
+				cityName: "Jakarta Pusat",
+				province: "DKI Jakarta",
+				country: "Indonesia",
+				latitude: -6.2088,
+				longitude: 106.8456,
+				timezone: "Asia/Jakarta",
+				timezoneOffset: 7,
+				calculationMethodId: "kemenag",
+				source: "manual",
+			},
+			update: {},
+		});
+	});
 }
 
 const serverEnvironment = getServerEnvironment();
@@ -31,7 +46,7 @@ const serverEnvironment = getServerEnvironment();
 export const auth = betterAuth({
 	baseURL: serverEnvironment.betterAuthUrl,
 	secret: serverEnvironment.betterAuthSecret,
-	database: pool,
+	database: authPool,
 	emailAndPassword: {
 		enabled: true,
 	},

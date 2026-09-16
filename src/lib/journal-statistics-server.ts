@@ -8,6 +8,7 @@ import {
 	type JournalReflectionRecord,
 } from "./journal-statistics";
 import { db } from "./prisma";
+import { parseIsoDate, parseTimezone } from "./server-validation";
 import { getCurrentSession } from "./session";
 import { getWeekDayColumns, type PeriodDayColumn } from "./statistics";
 import { formatLocalDate } from "./timezone";
@@ -20,10 +21,16 @@ export interface JournalStatisticsData {
 	timezone: string;
 }
 
+import { setPrivateCacheControl } from "./cache";
+
 export const getJournalStatisticsData = createServerFn({ method: "GET" })
-	.validator(
-		(input: { clientLocalDate?: string; clientTimezone?: string }) => input,
-	)
+	.validator((input: { clientLocalDate?: string; clientTimezone?: string }) => {
+		if (input.clientLocalDate)
+			parseIsoDate(input.clientLocalDate, "clientLocalDate");
+		if (input.clientTimezone)
+			parseTimezone(input.clientTimezone, "clientTimezone");
+		return input;
+	})
 	.handler(async ({ data }): Promise<JournalStatisticsData> => {
 		const session = await getCurrentSession();
 		if (!session?.user) {
@@ -32,6 +39,7 @@ export const getJournalStatisticsData = createServerFn({ method: "GET" })
 				search: { redirect: "/journal/complete-statistic" },
 			});
 		}
+		setPrivateCacheControl();
 
 		const preference = await db.orm.public.UserLocationPreference.where({
 			userId: session.user.id,

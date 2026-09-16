@@ -2068,8 +2068,8 @@
                   "prefix": "valid_city_timezone"
                 },
                 {
-                  "expression": "timezoneOffset BETWEEN -14 AND 14",
-                  "name": "valid_city_timezone_offset_890d833d",
+                  "expression": "\"timezoneOffset\" BETWEEN -14 AND 14",
+                  "name": "valid_city_timezone_offset_810dd76e",
                   "prefix": "valid_city_timezone_offset"
                 }
               ],
@@ -2230,13 +2230,13 @@
             "journalEntry": {
               "checks": [
                 {
-                  "expression": "journalDate ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
-                  "name": "valid_journal_date_12c9aee1",
+                  "expression": "\"journalDate\" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
+                  "name": "valid_journal_date_58130547",
                   "prefix": "valid_journal_date"
                 },
                 {
-                  "expression": "(khusyuPercentage IS NULL OR khusyuPercentage BETWEEN 0 AND 100) AND (punctualityPercentage IS NULL OR punctualityPercentage BETWEEN 0 AND 100)",
-                  "name": "valid_journal_percentages_0c42645e",
+                  "expression": "(\"khusyuPercentage\" IS NULL OR \"khusyuPercentage\" BETWEEN 0 AND 100) AND (\"punctualityPercentage\" IS NULL OR \"punctualityPercentage\" BETWEEN 0 AND 100)",
+                  "name": "valid_journal_percentages_243c97b5",
                   "prefix": "valid_journal_percentages"
                 }
               ],
@@ -2333,8 +2333,8 @@
             "journalPrayerReflection": {
               "checks": [
                 {
-                  "expression": "prayerName IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
-                  "name": "valid_reflection_prayer_name_e423c318",
+                  "expression": "\"prayerName\" IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
+                  "name": "valid_reflection_prayer_name_a74aac75",
                   "prefix": "valid_reflection_prayer_name"
                 },
                 {
@@ -2343,8 +2343,8 @@
                   "prefix": "valid_reflection_punctuality"
                 },
                 {
-                  "expression": "(feelingScore IS NULL OR feelingScore BETWEEN 1 AND 4) AND (khusyuScore IS NULL OR khusyuScore BETWEEN 1 AND 4)",
-                  "name": "valid_reflection_scores_3b182229",
+                  "expression": "(\"feelingScore\" IS NULL OR \"feelingScore\" BETWEEN 1 AND 4) AND (\"khusyuScore\" IS NULL OR \"khusyuScore\" BETWEEN 1 AND 4)",
+                  "name": "valid_reflection_scores_2c22ff97",
                   "prefix": "valid_reflection_scores"
                 }
               ],
@@ -2663,8 +2663,8 @@
             "khazanahVerseSegment": {
               "checks": [
                 {
-                  "expression": "position > 0",
-                  "name": "valid_verse_segment_position_4dfe36f4",
+                  "expression": "position >= 0",
+                  "name": "valid_verse_segment_position_c03c2ccb",
                   "prefix": "valid_verse_segment_position"
                 }
               ],
@@ -2732,13 +2732,13 @@
             "prayerCalculationMethod": {
               "checks": [
                 {
-                  "expression": "(fajrAngle IS NULL OR fajrAngle BETWEEN 0 AND 90) AND (ishaAngle IS NULL OR ishaAngle BETWEEN 0 AND 90)",
-                  "name": "valid_calculation_angles_e7063b9b",
+                  "expression": "(\"fajrAngle\" IS NULL OR \"fajrAngle\" BETWEEN 0 AND 90) AND (\"ishaAngle\" IS NULL OR \"ishaAngle\" BETWEEN 0 AND 90)",
+                  "name": "valid_calculation_angles_ced22076",
                   "prefix": "valid_calculation_angles"
                 },
                 {
-                  "expression": "ishaIntervalMinutes IS NULL OR ishaIntervalMinutes BETWEEN 0 AND 1440",
-                  "name": "valid_isha_interval_677bc4d5",
+                  "expression": "\"ishaIntervalMinutes\" IS NULL OR \"ishaIntervalMinutes\" BETWEEN 0 AND 1440",
+                  "name": "valid_isha_interval_1d826c4a",
                   "prefix": "valid_isha_interval"
                 }
               ],
@@ -2800,18 +2800,18 @@
             "prayerLog": {
               "checks": [
                 {
-                  "expression": "prayerDate ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
-                  "name": "valid_prayer_log_date_c09903cf",
+                  "expression": "\"prayerDate\" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
+                  "name": "valid_prayer_log_date_a1c36d83",
                   "prefix": "valid_prayer_log_date"
                 },
                 {
-                  "expression": "prayerName IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
-                  "name": "valid_prayer_log_name_e423c318",
+                  "expression": "\"prayerName\" IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
+                  "name": "valid_prayer_log_name_a74aac75",
                   "prefix": "valid_prayer_log_name"
                 },
                 {
-                  "expression": "(feelingScore IS NULL OR feelingScore BETWEEN 1 AND 4) AND (khusyuScore IS NULL OR khusyuScore BETWEEN 1 AND 4)",
-                  "name": "valid_prayer_log_scores_3b182229",
+                  "expression": "(\"feelingScore\" IS NULL OR \"feelingScore\" BETWEEN 1 AND 4) AND (\"khusyuScore\" IS NULL OR \"khusyuScore\" BETWEEN 1 AND 4)",
+                  "name": "valid_prayer_log_scores_2c22ff97",
                   "prefix": "valid_prayer_log_scores"
                 },
                 {
@@ -2934,13 +2934,13 @@
             "prayerSchedule": {
               "checks": [
                 {
-                  "expression": "prayerDate ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
-                  "name": "valid_schedule_date_c09903cf",
+                  "expression": "\"prayerDate\" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
+                  "name": "valid_schedule_date_a1c36d83",
                   "prefix": "valid_schedule_date"
                 },
                 {
-                  "expression": "prayerName IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
-                  "name": "valid_schedule_prayer_name_e423c318",
+                  "expression": "\"prayerName\" IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
+                  "name": "valid_schedule_prayer_name_a74aac75",
                   "prefix": "valid_schedule_prayer_name"
                 },
                 {
@@ -3185,8 +3185,8 @@
                   "prefix": "valid_location_timezone"
                 },
                 {
-                  "expression": "timezoneOffset BETWEEN -14 AND 14",
-                  "name": "valid_location_timezone_offset_890d833d",
+                  "expression": "\"timezoneOffset\" BETWEEN -14 AND 14",
+                  "name": "valid_location_timezone_offset_810dd76e",
                   "prefix": "valid_location_timezone_offset"
                 }
               ],
@@ -3508,7 +3508,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "c2f82a9bcfa86e67bcbe3885a844d19a430923799b5f335f912b422fbd537fbb"
+    "storageHash": "c92c3e919c78db676732fad4e76d2bcb5a25a81594817ed5585131189098a6a8"
   },
   "execution": {
     "executionHash": "35c0538f2b41bb8a6ebedec5e78beb47bcd9c9edc460c83a817f2eadc1d88a71",

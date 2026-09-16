@@ -1,1 +1,1 @@
-export { db } from "../../prisma/db";
+export { authPool, db } from "../../prisma/db";

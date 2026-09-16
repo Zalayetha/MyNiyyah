@@ -3,6 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { auth } from "./auth";
 import { safeRedirect } from "./auth-validation";
+import { setPrivateCacheControl } from "./cache";
 
 const GUEST_ONLY_ROUTES: Record<string, true> = {
 	"/login": true,
@@ -29,7 +30,13 @@ export function isGuestOnlyRoute(pathname: string): boolean {
 }
 
 export const getCurrentSession = createServerFn({ method: "GET" }).handler(
-	async () => auth.api.getSession({ headers: getRequestHeaders() }),
+	async () => {
+		const session = await auth.api.getSession({ headers: getRequestHeaders() });
+		if (session?.user) {
+			setPrivateCacheControl();
+		}
+		return session;
+	},
 );
 
 export interface RequireAuthInput {

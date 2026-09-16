@@ -11,6 +11,7 @@ import {
 	type PrayerHeatmapLog,
 } from "./prayer-heatmap";
 import { db } from "./prisma";
+import { parseIsoDate, parseTimezone } from "./server-validation";
 import { getCurrentSession } from "./session";
 import { calculateElapsedCompletionRate } from "./statistics";
 import {
@@ -26,6 +27,8 @@ export interface PrayerHeatmapServerData extends HeatmapDataResponse {
 	completedPrayersPeriod: number;
 }
 
+import { setPrivateCacheControl } from "./cache";
+
 const DEFAULT_JAKARTA_PREF = {
 	cityId: "jkt",
 	cityName: "Jakarta Pusat",
@@ -40,9 +43,13 @@ const DEFAULT_JAKARTA_PREF = {
  * Server function to fetch prayer heatmap data across a rolling 7-day window.
  */
 export const getPrayerHeatmapData = createServerFn({ method: "GET" })
-	.validator(
-		(input: { clientLocalDate?: string; clientTimezone?: string }) => input,
-	)
+	.validator((input: { clientLocalDate?: string; clientTimezone?: string }) => {
+		if (input.clientLocalDate)
+			parseIsoDate(input.clientLocalDate, "clientLocalDate");
+		if (input.clientTimezone)
+			parseTimezone(input.clientTimezone, "clientTimezone");
+		return input;
+	})
 	.handler(async ({ data }): Promise<PrayerHeatmapServerData> => {
 		const session = await getCurrentSession();
 		if (!session?.user) {
@@ -53,6 +60,7 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 				},
 			});
 		}
+		setPrivateCacheControl();
 
 		const userId = session.user.id;
 		const clientTz = data?.clientTimezone?.trim() || "Asia/Jakarta";

@@ -1,3 +1,13 @@
+import { Temporal } from "@js-temporal/polyfill";
+
+export function toTemporalInstant(
+	value: Date | string | null | undefined,
+): Temporal.Instant | null {
+	if (!value) return null;
+	const iso = value instanceof Date ? value.toISOString() : value;
+	return Temporal.Instant.from(iso);
+}
+
 export interface DetectedTimezone {
 	timeZone: string;
 	offsetMinutes: number;
