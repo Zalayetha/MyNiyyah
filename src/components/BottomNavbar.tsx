@@ -54,7 +54,7 @@ export function BottomNavbarView({
 						{isActive && (
 							<motion.div
 								layoutId="bottomNavbarActivePill"
-								className="absolute inset-0 rounded-full bg-gradient-to-r from-[#02bda7] via-[#32d7c4] to-[#53d7c8] shadow-[0_2px_14px_rgba(50,215,196,0.35)]"
+								className="absolute inset-0 rounded-full bg-linear-to-r from-[#02bda7] via-[#32d7c4] to-[#53d7c8] shadow-[0_2px_14px_rgba(50,215,196,0.35)]"
 								transition={{
 									type: reduceMotion ? false : "spring",
 									stiffness: 400,

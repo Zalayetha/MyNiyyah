@@ -18,7 +18,7 @@ const securityHeaders = {
 		"font-src 'self'",
 		"style-src 'self' 'unsafe-inline'",
 		"script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-		"connect-src 'self'",
+		"connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com",
 	].join("; "),
 	"X-Frame-Options": "DENY",
 	"X-Content-Type-Options": "nosniff",
