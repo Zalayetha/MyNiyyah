@@ -46,10 +46,24 @@ export function DonutChart({
 		accumulatedOffset -= circumference * percentage;
 		return segment;
 	});
+	const summary =
+		total > 0
+			? segments
+					.map(
+						(segment) =>
+							`${segment.label}: ${segment.value} (${Math.round(segment.percentage * 100)}%)`,
+					)
+					.join(", ")
+			: "Tidak ada data";
 
 	return (
 		<div className={`flex flex-col items-center gap-4 ${className}`}>
-			<div className="relative" style={{ width: size, height: size }}>
+			<div
+				className="relative"
+				style={{ width: size, height: size }}
+				role="img"
+				aria-label={`${title}. ${summary}`}
+			>
 				<svg
 					width={size}
 					height={size}

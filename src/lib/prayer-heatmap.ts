@@ -14,7 +14,7 @@ export const HEATMAP_STATUS_LABELS: Record<
 	0 | 1 | 2 | 3,
 	{ label: string; className: string }
 > = {
-	0: { label: "Ditunaikan", className: "bg-primary" },
+	0: { label: "Tepat Waktu", className: "bg-primary" },
 	1: { label: "Terlambat", className: "bg-lime-200" },
 	2: { label: "Aktif", className: "bg-orange-300" },
 	3: { label: "Belum Dicatat", className: "bg-cyan-900" },
