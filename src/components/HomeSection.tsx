@@ -8,7 +8,7 @@ import { Card, CardContent } from "./ui/card";
 interface HomeSectionProps {
 	user: {
 		name: string;
-		avatar: string;
+		avatar: string | null;
 	};
 	prayer: {
 		next: string;
@@ -17,7 +17,7 @@ interface HomeSectionProps {
 	ayah: {
 		text: string;
 		source: string;
-	};
+	} | null;
 	chartData: Array<{
 		day: string;
 		value: number;
@@ -48,8 +48,10 @@ export function HomeSection({
 			{/* Avatar & Greeting */}
 			<div className="flex flex-row p-4 items-center gap-4">
 				<Avatar className="ring-2 ring-ring">
-					<AvatarImage src={user.avatar} alt={user.name} />
-					<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+					<AvatarImage src={user.avatar ?? undefined} alt={user.name} />
+					<AvatarFallback>
+						{user.name.charAt(0).toUpperCase() || "U"}
+					</AvatarFallback>
 				</Avatar>
 				<div className="text-lg text-muted-foreground">Ahlan, {user.name}</div>
 			</div>
@@ -128,7 +130,13 @@ export function HomeSection({
 								</linearGradient>
 							</defs>
 						</svg>
-						<div>"{ayah.text}"</div>
+						{ayah ? (
+							<div>"{ayah.text}"</div>
+						) : (
+							<div className="text-muted-foreground">
+								Belum ada ayat pilihan.
+							</div>
+						)}
 						<div className="flex flex-row justify-between items-center">
 							<div className="flex flex-row gap-2 items-center">
 								<BookOpen
@@ -137,7 +145,7 @@ export function HomeSection({
 									fill="url(#cyan-gradient)"
 								/>
 								<div className="text-xs font-medium bg-linear-to-r from-[#02bda7] via-[#53d7c8] to-[#a7fff5] bg-clip-text text-transparent">
-									{ayah.source}
+									{ayah?.source ?? "Khazanah"}
 								</div>
 							</div>
 						</div>

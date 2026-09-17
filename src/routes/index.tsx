@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
-import { authClient } from "#/lib/auth-client";
+import { getDashboardData } from "#/lib/dashboard-server";
 import { getNextPrayerStatus } from "#/lib/prayer-calculation";
 import { getPrayerHeatmapData } from "#/lib/prayer-heatmap-server";
 import { getPrayerTrackerData } from "#/lib/prayer-tracker-server";
@@ -21,16 +21,17 @@ function parseSection(value: unknown): Section | undefined {
 
 export const Route = createFileRoute("/")({
 	loader: async () => {
-		const [trackerData, heatmapData] = await Promise.all([
+		const [trackerData, heatmapData, dashboardData] = await Promise.all([
 			getPrayerTrackerData({
 				data: {},
 			}),
 			getPrayerHeatmapData({
 				data: {},
 			}),
+			getDashboardData(),
 		]);
 
-		return { trackerData, heatmapData };
+		return { trackerData, heatmapData, dashboardData };
 	},
 	component: Home,
 	validateSearch: (search: Record<string, unknown>) => ({
@@ -40,17 +41,10 @@ export const Route = createFileRoute("/")({
 
 function Home() {
 	const { section } = Route.useSearch();
-	const { trackerData, heatmapData } = Route.useLoaderData();
-	const { data: session } = authClient.useSession();
+	const { trackerData, heatmapData, dashboardData } = Route.useLoaderData();
 	const currentSection: Section = section ?? "home";
 
-	const user = {
-		name: session?.user.name ?? "User",
-		email: session?.user.email ?? "",
-		avatar:
-			session?.user.image ??
-			"https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
-	};
+	const user = dashboardData.user;
 
 	const nextPrayerInfo = useMemo(() => {
 		if (!trackerData?.schedule) {
@@ -68,10 +62,7 @@ function Home() {
 		time: nextPrayerInfo.time,
 	};
 
-	const ayah = {
-		text: "...Sesungguhnya shalat mencegah dari perbuatan buruk dan mungkar...",
-		source: "Q.S Al-Ankabut: 45",
-	};
+	const ayah = dashboardData.ayah;
 
 	const chartData = useMemo(() => {
 		return heatmapData.days.map((day, columnIndex) => {
@@ -96,11 +87,7 @@ function Home() {
 		});
 	}, [heatmapData.days, heatmapData.matrix]);
 
-	const accountStats = {
-		totalPrayers: trackerData?.totalPrayers ?? 0,
-		streak: 14,
-		journalEntries: 28,
-	};
+	const accountStats = dashboardData.stats;
 
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background">
@@ -114,11 +101,15 @@ function Home() {
 			</section>
 
 			<section className={currentSection === "journal" ? "" : "hidden"}>
-				<JournalSection />
+				<JournalSection stats={accountStats} />
 			</section>
 
 			<section className={currentSection === "account" ? "" : "hidden"}>
-				<AccountSection user={user} stats={accountStats} />
+				<AccountSection
+					user={user}
+					stats={accountStats}
+					location={dashboardData.location}
+				/>
 			</section>
 
 			<BottomNavbar />

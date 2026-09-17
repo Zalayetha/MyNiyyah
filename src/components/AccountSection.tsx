@@ -78,16 +78,24 @@ interface AccountSectionProps {
 	user: {
 		name: string;
 		email: string;
-		avatar: string;
+		avatar: string | null;
 	};
 	stats: {
 		totalPrayers: number;
-		streak: number;
+		prayerStreak?: number;
+		streak?: number;
+		journalStreak?: number;
 		journalEntries: number;
+		attachedVerses?: number;
 	};
+	location?: string;
 }
 
-export function AccountSection({ user, stats }: AccountSectionProps) {
+export function AccountSection({
+	user,
+	stats,
+	location = "Belum diatur",
+}: AccountSectionProps) {
 	const navigate = useNavigate();
 
 	return (
@@ -106,11 +114,9 @@ export function AccountSection({ user, stats }: AccountSectionProps) {
 				aria-label={`Edit profil ${user.name}`}
 				className="mx-8 mt-6 flex min-h-24 flex-row items-center gap-4 rounded-xl bg-card p-4 transition-colors hover:bg-card/80 outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 			>
-				<img
-					src={user.avatar}
-					alt={`Foto profil ${user.name}`}
-					className="size-16 rounded-full ring-2 ring-ring"
-				/>
+				<div className="flex size-16 items-center justify-center rounded-full bg-primary text-xl font-semibold text-primary-foreground ring-2 ring-ring">
+					{user.name.charAt(0).toUpperCase() || "U"}
+				</div>
 				<div className="flex flex-col">
 					<div className="text-foreground font-semibold text-lg">
 						{user.name}
@@ -139,7 +145,7 @@ export function AccountSection({ user, stats }: AccountSectionProps) {
 					<div className="w-px bg-border" />
 					<div className="flex flex-col items-center">
 						<div className="text-foreground font-semibold text-2xl">
-							{stats.streak}
+							{stats.prayerStreak ?? stats.streak ?? 0}
 						</div>
 						<div className="text-muted-foreground text-xs mt-1">
 							Hari Streak
@@ -164,7 +170,7 @@ export function AccountSection({ user, stats }: AccountSectionProps) {
 					<SettingItem
 						icon="ph:map-pin"
 						label="Lokasi"
-						value="Jakarta, ID"
+						value={location}
 						link="/location"
 					/>
 				</div>
