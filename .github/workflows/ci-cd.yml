@@ -102,7 +102,7 @@ jobs:
             corepack enable
             pnpm install --frozen-lockfile
             set -a
-            . /root/live/.env
+            . /root/live/MyNiyyah/.env
             set +a
             pnpm contract:emit
             pnpm db:update
