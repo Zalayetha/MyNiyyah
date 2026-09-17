@@ -115,7 +115,7 @@ function VerseDetailPage() {
 				{/* Arabic Text */}
 				<p
 					dir="rtl"
-					className="mt-8 w-full text-center font-['Amiri',serif] text-2xl text-[#32d7c4] leading-loose"
+					className="mt-8 w-full text-center font-serif text-2xl text-[#32d7c4] leading-loose"
 				>
 					{verse.arabic}
 				</p>

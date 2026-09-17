@@ -21,6 +21,7 @@ export function isPublicRoute(pathname: string): boolean {
 	const normalized = pathname.replace(/\/+$/, "") || "/";
 	if (PUBLIC_EXACT_ROUTES[normalized]) return true;
 	if (normalized.startsWith("/api/auth")) return true;
+	if (normalized === "/api/health" || normalized === "/api/ready") return true;
 	if (normalized === "/khazanah" || normalized.startsWith("/khazanah/")) {
 		return true;
 	}

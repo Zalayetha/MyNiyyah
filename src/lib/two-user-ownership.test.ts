@@ -179,8 +179,12 @@ describe("T4: Two-user ownership isolation and private caching contracts", () =>
 		expect(originalEntry?.id).toBe(journalEntryAId);
 	});
 
-	it("deleting journal entry preserves canonical prayer logs (onDelete SET NULL)", async () => {
-		// User A deletes their own journal entry
+	it("deleting journal entry preserves canonical prayer logs", async () => {
+		// App deletes journal child rows first because reference prayer logs are canonical.
+		await db.orm.public.JournalPrayerReflection.where({
+			journalEntryId: journalEntryAId,
+		}).delete();
+
 		const deletedRecordA = await db.orm.public.JournalEntry.where({
 			id: journalEntryAId,
 			userId: userAId,

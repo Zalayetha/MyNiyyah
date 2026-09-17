@@ -87,7 +87,7 @@ function KhazanahCategoryPage() {
 							{/* Arabic Text */}
 							<p
 								dir="rtl"
-								className="w-full text-center font-['Amiri',serif] text-xl text-[#32d7c4] leading-loose"
+								className="w-full text-center font-serif text-xl text-[#32d7c4] leading-loose"
 							>
 								{verse.arabic}
 							</p>

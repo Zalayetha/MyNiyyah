@@ -19,7 +19,21 @@ jobs:
   ci:
     name: Validate
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: myniyyah
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d myniyyah"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/myniyyah?schema=public"
       BETTER_AUTH_SECRET: "ci-dummy-auth-secret-for-build-and-testing-only-12345"
@@ -43,7 +57,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm prisma contract emit
+        run: pnpm contract:emit
+
+      - name: Apply database schema
+        run: pnpm db:update
+
+      - name: Seed reference data
+        run: pnpm db:seed
+
+      - name: Verify database schema
+        run: pnpm db:verify
 
       - name: Check formatting and linting
         run: pnpm check
@@ -55,15 +78,15 @@ jobs:
         run: pnpm build
 
   cd:
-    name: Deployment placeholder
+    name: Deployment gate
     needs: ci
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: Log deployment placeholder
-        run: echo "CD placeholder — deployment would run for commit $GITHUB_SHA"
+      - name: Report deployment gate status
+        run: echo "CI passed for $GITHUB_SHA. Enable the documented SSH block only after VPS secrets and restore rehearsal are verified."
       # - name: SSH to server and run script
       #   uses: appleboy/ssh-action@v1
       #   with:
@@ -75,13 +98,16 @@ jobs:
       #       set -e
       #       cd /root/live/MyNiyyah
       #       git fetch origin main
-      #       git checkout main
-      #       git pull --ff-only origin main
+      #       git checkout --detach "$GITHUB_SHA"
       #       corepack enable
       #       pnpm install --frozen-lockfile
-      #       pnpm contract:emit
-      #       pnpm build
       #       set -a
       #       . /etc/myniyyah.env
       #       set +a
+      #       pnpm contract:emit
+      #       pnpm db:update
+      #       pnpm db:seed
+      #       pnpm db:verify
+      #       pnpm build
       #       pm2 reload ecosystem.config.cjs --only myniyyah --update-env
+      #       curl --fail --silent --show-error --max-time 10 https://myniyyah.my.id/api/ready

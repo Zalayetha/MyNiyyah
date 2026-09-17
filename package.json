@@ -24,7 +24,9 @@
     "db:schema": "dotenv -e .env -- pnpm exec prisma db schema",
     "db:seed": "dotenv -e .env -- tsx prisma/seed.ts",
     "prepare": "husky",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "release:headers": "node scripts/check-security-headers.mjs",
+    "release:verify": "pnpm check && pnpm test && pnpm db:verify && pnpm build"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

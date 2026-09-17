@@ -19,6 +19,8 @@ import { Route as PrayerTrackerRouteImport } from './routes/prayer-tracker'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiReadyRouteImport } from './routes/api/ready'
 import { Route as JournalCompleteStatisticRouteImport } from './routes/journal/complete-statistic'
 import { Route as KhazanahIndexRouteImport } from './routes/khazanah/index'
 import { Route as KhazanahCategoryRouteImport } from './routes/khazanah/$category'
@@ -78,6 +80,16 @@ const RegisterRoute = RegisterRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReadyRoute = ApiReadyRouteImport.update({
+  id: '/api/ready',
+  path: '/api/ready',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JournalCompleteStatisticRoute =
@@ -148,6 +160,8 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/ready': typeof ApiReadyRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah/': typeof KhazanahIndexRoute
@@ -170,6 +184,8 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/ready': typeof ApiReadyRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah': typeof KhazanahIndexRoute
@@ -193,6 +209,8 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
   '/terms': typeof TermsRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/ready': typeof ApiReadyRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah/': typeof KhazanahIndexRoute
@@ -217,6 +235,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/terms'
+    | '/api/health'
+    | '/api/ready'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah/'
@@ -239,6 +259,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/terms'
+    | '/api/health'
+    | '/api/ready'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah'
@@ -261,6 +283,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/register'
     | '/terms'
+    | '/api/health'
+    | '/api/ready'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah/'
@@ -284,6 +308,8 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
   TermsRoute: typeof TermsRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiReadyRoute: typeof ApiReadyRoute
   JournalCompleteStatisticRoute: typeof JournalCompleteStatisticRoute
   KhazanahCategoryRoute: typeof KhazanahCategoryRoute
   KhazanahIndexRoute: typeof KhazanahIndexRoute
@@ -365,6 +391,20 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ready': {
+      id: '/api/ready'
+      path: '/api/ready'
+      fullPath: '/api/ready'
+      preLoaderRoute: typeof ApiReadyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/journal/complete-statistic': {
@@ -465,6 +505,8 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
   TermsRoute: TermsRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiReadyRoute: ApiReadyRoute,
   JournalCompleteStatisticRoute: JournalCompleteStatisticRoute,
   KhazanahCategoryRoute: KhazanahCategoryRoute,
   KhazanahIndexRoute: KhazanahIndexRoute,
