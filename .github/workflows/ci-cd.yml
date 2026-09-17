@@ -98,11 +98,11 @@ jobs:
             set -e
             cd /root/live/MyNiyyah
             git fetch origin main
-            git checkout --detach "$GITHUB_SHA"
+            git checkout main
             corepack enable
             pnpm install --frozen-lockfile
             set -a
-            . /etc/myniyyah.env
+            . /root/live/.env
             set +a
             pnpm contract:emit
             pnpm db:update
