@@ -11,11 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as EditProfileRouteImport } from './routes/edit-profile'
 import { Route as LocationRouteImport } from './routes/location'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrayerTrackerRouteImport } from './routes/prayer-tracker'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as JournalCompleteStatisticRouteImport } from './routes/journal/complete-statistic'
 import { Route as KhazanahIndexRouteImport } from './routes/khazanah/index'
 import { Route as KhazanahCategoryRouteImport } from './routes/khazanah/$category'
@@ -35,6 +38,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EditProfileRoute = EditProfileRouteImport.update({
@@ -57,9 +65,19 @@ const PrayerTrackerRoute = PrayerTrackerRouteImport.update({
   path: '/prayer-tracker',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const JournalCompleteStatisticRoute =
@@ -122,11 +140,14 @@ const JournalDailyJournalThemeIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/edit-profile': typeof EditProfileRoute
   '/location': typeof LocationRoute
   '/login': typeof LoginRoute
   '/prayer-tracker': typeof PrayerTrackerRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/terms': typeof TermsRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah/': typeof KhazanahIndexRoute
@@ -141,11 +162,14 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/edit-profile': typeof EditProfileRoute
   '/location': typeof LocationRoute
   '/login': typeof LoginRoute
   '/prayer-tracker': typeof PrayerTrackerRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/terms': typeof TermsRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah': typeof KhazanahIndexRoute
@@ -161,11 +185,14 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/contact': typeof ContactRoute
   '/edit-profile': typeof EditProfileRoute
   '/location': typeof LocationRoute
   '/login': typeof LoginRoute
   '/prayer-tracker': typeof PrayerTrackerRoute
+  '/privacy': typeof PrivacyRoute
   '/register': typeof RegisterRoute
+  '/terms': typeof TermsRoute
   '/journal/complete-statistic': typeof JournalCompleteStatisticRoute
   '/khazanah/$category': typeof KhazanahCategoryRoute
   '/khazanah/': typeof KhazanahIndexRoute
@@ -182,11 +209,14 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/contact'
     | '/edit-profile'
     | '/location'
     | '/login'
     | '/prayer-tracker'
+    | '/privacy'
     | '/register'
+    | '/terms'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah/'
@@ -201,11 +231,14 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/contact'
     | '/edit-profile'
     | '/location'
     | '/login'
     | '/prayer-tracker'
+    | '/privacy'
     | '/register'
+    | '/terms'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah'
@@ -220,11 +253,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/contact'
     | '/edit-profile'
     | '/location'
     | '/login'
     | '/prayer-tracker'
+    | '/privacy'
     | '/register'
+    | '/terms'
     | '/journal/complete-statistic'
     | '/khazanah/$category'
     | '/khazanah/'
@@ -240,11 +276,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  ContactRoute: typeof ContactRoute
   EditProfileRoute: typeof EditProfileRoute
   LocationRoute: typeof LocationRoute
   LoginRoute: typeof LoginRoute
   PrayerTrackerRoute: typeof PrayerTrackerRoute
+  PrivacyRoute: typeof PrivacyRoute
   RegisterRoute: typeof RegisterRoute
+  TermsRoute: typeof TermsRoute
   JournalCompleteStatisticRoute: typeof JournalCompleteStatisticRoute
   KhazanahCategoryRoute: typeof KhazanahCategoryRoute
   KhazanahIndexRoute: typeof KhazanahIndexRoute
@@ -270,6 +309,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/edit-profile': {
@@ -300,11 +346,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrayerTrackerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/journal/complete-statistic': {
@@ -397,11 +457,14 @@ const JournalDailyJournalCreateRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  ContactRoute: ContactRoute,
   EditProfileRoute: EditProfileRoute,
   LocationRoute: LocationRoute,
   LoginRoute: LoginRoute,
   PrayerTrackerRoute: PrayerTrackerRoute,
+  PrivacyRoute: PrivacyRoute,
   RegisterRoute: RegisterRoute,
+  TermsRoute: TermsRoute,
   JournalCompleteStatisticRoute: JournalCompleteStatisticRoute,
   KhazanahCategoryRoute: KhazanahCategoryRoute,
   KhazanahIndexRoute: KhazanahIndexRoute,

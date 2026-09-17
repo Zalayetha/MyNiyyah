@@ -132,8 +132,8 @@ function AboutPage() {
 						</CardTitle>
 					</CardHeader>
 					<CardContent className="flex flex-col gap-2">
-						<button
-							type="button"
+						<Link
+							to="/privacy"
 							className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors text-left"
 						>
 							<div className="flex items-center gap-3">
@@ -143,9 +143,9 @@ function AboutPage() {
 								</span>
 							</div>
 							<ChevronRight className="size-4 text-muted-foreground" />
-						</button>
-						<button
-							type="button"
+						</Link>
+						<Link
+							to="/terms"
 							className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors text-left"
 						>
 							<div className="flex items-center gap-3">
@@ -155,9 +155,9 @@ function AboutPage() {
 								</span>
 							</div>
 							<ChevronRight className="size-4 text-muted-foreground" />
-						</button>
-						<button
-							type="button"
+						</Link>
+						<Link
+							to="/contact"
 							className="flex flex-row items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-colors text-left"
 						>
 							<div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ function AboutPage() {
 								</span>
 							</div>
 							<ChevronRight className="size-4 text-muted-foreground" />
-						</button>
+						</Link>
 					</CardContent>
 				</Card>
 

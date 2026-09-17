@@ -12,6 +12,9 @@ const GUEST_ONLY_ROUTES: Record<string, true> = {
 
 const PUBLIC_EXACT_ROUTES: Record<string, true> = {
 	"/about": true,
+	"/contact": true,
+	"/privacy": true,
+	"/terms": true,
 };
 
 export function isPublicRoute(pathname: string): boolean {

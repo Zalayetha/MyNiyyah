@@ -16,6 +16,7 @@ export const auth = betterAuth({
 	database: authPool,
 	emailAndPassword: {
 		enabled: true,
+		disableSignUp: true,
 	},
 	trustedOrigins: serverEnvironment.betterAuthTrustedOrigins,
 	databaseHooks: {
