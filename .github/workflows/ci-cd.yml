@@ -99,6 +99,7 @@ jobs:
             cd /root/live/MyNiyyah
             git fetch origin main
             git checkout main
+            git reset --hard origin/main
             corepack enable
             pnpm install --frozen-lockfile
             set -a
