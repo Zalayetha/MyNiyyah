@@ -87,27 +87,27 @@ jobs:
     steps:
       - name: Report deployment gate status
         run: echo "CI passed for $GITHUB_SHA. Enable the documented SSH block only after VPS secrets and restore rehearsal are verified."
-      # - name: SSH to server and run script
-      #   uses: appleboy/ssh-action@v1
-      #   with:
-      #     host: ${{ secrets.SSH_HOST }}
-      #     username: ${{ secrets.SSH_USERNAME }}
-      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     port: ${{ secrets.SSH_PORT }}
-      #     script: |
-      #       set -e
-      #       cd /root/live/MyNiyyah
-      #       git fetch origin main
-      #       git checkout --detach "$GITHUB_SHA"
-      #       corepack enable
-      #       pnpm install --frozen-lockfile
-      #       set -a
-      #       . /etc/myniyyah.env
-      #       set +a
-      #       pnpm contract:emit
-      #       pnpm db:update
-      #       pnpm db:seed
-      #       pnpm db:verify
-      #       pnpm build
-      #       pm2 reload ecosystem.config.cjs --only myniyyah --update-env
-      #       curl --fail --silent --show-error --max-time 10 https://myniyyah.my.id/api/ready
+      - name: SSH to server and run script
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+            cd /root/live/MyNiyyah
+            git fetch origin main
+            git checkout --detach "$GITHUB_SHA"
+            corepack enable
+            pnpm install --frozen-lockfile
+            set -a
+            . /etc/myniyyah.env
+            set +a
+            pnpm contract:emit
+            pnpm db:update
+            pnpm db:seed
+            pnpm db:verify
+            pnpm build
+            pm2 reload ecosystem.config.cjs --only MyNiyyah --update-env
+            curl --fail --silent --show-error --max-time 10 https://myniyyah.my.id/api/ready
