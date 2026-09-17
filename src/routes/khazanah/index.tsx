@@ -1,21 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { KHAZANAH_CATEGORIES } from "#/lib/khazanah-data";
+import {
+	getKhazanahCategories,
+	KHAZANAH_SOURCE_METADATA,
+} from "#/lib/khazanah-data";
+
+interface KhazanahSearch {
+	returnTo?: string;
+}
 
 export const Route = createFileRoute("/khazanah/")({
+	validateSearch: (search: Record<string, unknown>): KhazanahSearch => ({
+		returnTo:
+			typeof search.returnTo === "string" && search.returnTo.startsWith("/")
+				? search.returnTo
+				: undefined,
+	}),
 	component: KhazanahIndexPage,
 });
 
 function KhazanahIndexPage() {
+	const { returnTo } = Route.useSearch();
+	const categories = getKhazanahCategories();
+
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background px-4 pb-12 text-foreground">
 			{/* Top Bar */}
 			<header className="pt-14">
 				<Link
-					to="/journal/daily-journal/create/$step"
-					params={{ step: "journal-2-write" }}
+					to={returnTo ?? "/"}
 					className="inline-flex h-10 w-10 items-center justify-start"
-					aria-label="Kembali ke isi jurnal"
+					aria-label="Kembali"
 				>
 					<ArrowLeft className="size-7" strokeWidth={2.75} />
 				</Link>
@@ -27,10 +42,14 @@ function KhazanahIndexPage() {
 				<p className="mt-1 text-muted-foreground text-sm">
 					Perkuat muhasabah dengan ayat-ayat
 				</p>
+				<p className="mt-2 text-muted-foreground text-xs leading-relaxed">
+					Sumber: {KHAZANAH_SOURCE_METADATA.translationEdition} (
+					{KHAZANAH_SOURCE_METADATA.contentVersion})
+				</p>
 
 				{/* Category Cards */}
 				<div className="mt-6 flex flex-col gap-5">
-					{KHAZANAH_CATEGORIES.map((category) => (
+					{categories.map((category) => (
 						<section
 							key={category.id}
 							className="flex flex-col gap-3 rounded-3xl bg-[#062642] p-5"
@@ -38,6 +57,7 @@ function KhazanahIndexPage() {
 							<Link
 								to="/khazanah/$category"
 								params={{ category: category.slug }}
+								search={{ returnTo }}
 								className="group flex items-center justify-between"
 							>
 								<h2 className="font-bold text-lg text-foreground transition-colors group-hover:text-primary">
@@ -52,6 +72,7 @@ function KhazanahIndexPage() {
 											key={verse.id}
 											to="/khazanah/verse/$id"
 											params={{ id: verse.id }}
+											search={{ returnTo }}
 											className="flex items-center justify-between rounded-2xl bg-[#0a1527] px-4 py-3.5 transition-all hover:bg-[#101f35] active:scale-[0.99]"
 										>
 											<span className="font-medium text-foreground text-sm">

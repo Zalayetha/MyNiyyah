@@ -7,18 +7,51 @@ import {
 	getJournalLibraryData,
 } from "#/lib/journal-server";
 
+interface JournalIndexSearch {
+	page: number;
+	query?: string;
+	themeId?: string;
+	fromDate?: string;
+	toDate?: string;
+	sort?: "newest" | "oldest";
+}
+
 export const Route = createFileRoute("/journal/daily-journal/")({
-	validateSearch: (search: Record<string, unknown>) => ({
-		page:
-			typeof search.page === "string"
-				? Math.max(1, Number(search.page) || 1)
-				: 1,
+	validateSearch: (search: Record<string, unknown>): JournalIndexSearch => {
+		const parsed: JournalIndexSearch = {
+			page:
+				typeof search.page === "string"
+					? Math.max(1, Number(search.page) || 1)
+					: 1,
+		};
+		if (typeof search.query === "string") parsed.query = search.query;
+		if (typeof search.themeId === "string") parsed.themeId = search.themeId;
+		if (typeof search.fromDate === "string") parsed.fromDate = search.fromDate;
+		if (typeof search.toDate === "string") parsed.toDate = search.toDate;
+		if (search.sort === "oldest") parsed.sort = "oldest";
+		return parsed;
+	},
+	loaderDeps: ({ search }) => ({
+		page: search.page,
+		query: search.query,
+		themeId: search.themeId,
+		fromDate: search.fromDate,
+		toDate: search.toDate,
+		sort: search.sort,
 	}),
-	loaderDeps: ({ search }) => ({ page: search.page }),
 	loader: async ({ deps }) =>
 		Promise.all([
 			getJournalCategoryCounts(),
-			getJournalLibraryData({ data: { page: deps.page } }),
+			getJournalLibraryData({
+				data: {
+					page: deps.page,
+					query: deps.query,
+					themeId: deps.themeId,
+					fromDate: deps.fromDate,
+					toDate: deps.toDate,
+					sort: deps.sort,
+				},
+			}),
 		]),
 	component: RouteComponent,
 });

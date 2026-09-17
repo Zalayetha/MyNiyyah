@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
+import { clearJournalDraftStorage } from "#/lib/journal-reflection";
 import {
 	deleteJournalEntryAction,
 	getJournalEntryById,
@@ -51,15 +52,7 @@ function JournalEntryPage() {
 							setError(null);
 							try {
 								await deleteJournalEntryAction({ data: { entryId: entry.id } });
-								for (
-									let index = sessionStorage.length - 1;
-									index >= 0;
-									index -= 1
-								) {
-									const key = sessionStorage.key(index);
-									if (key?.startsWith("myniyyah_journal_draft"))
-										sessionStorage.removeItem(key);
-								}
+								clearJournalDraftStorage(sessionStorage);
 								await navigate({
 									to: "/journal/daily-journal",
 									search: { page: 1 },

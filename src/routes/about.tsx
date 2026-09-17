@@ -37,9 +37,9 @@ function AboutPage() {
 		},
 		{
 			icon: Sparkles,
-			title: "Khazanah & Pengingat",
+			title: "Khazanah Al-Qur'an",
 			description:
-				"Kumpulan mutiara ayat Al-Qur'an dan hadits harian sebagai inspirasi harian.",
+				"Kutipan ayat Al-Qur'an pilihan dengan terjemahan Indonesia untuk mendukung refleksi harian.",
 		},
 	];
 

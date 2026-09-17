@@ -295,6 +295,45 @@ export function createInitialJournalDraft(
 	};
 }
 
+export function getJournalDraftStorageKey(scope: string, date: string) {
+	return `${JOURNAL_DRAFT_STORAGE_KEY}:${scope}:${date}`;
+}
+
+export function clearJournalDraftStorage(storage: Storage) {
+	for (let index = storage.length - 1; index >= 0; index -= 1) {
+		const key = storage.key(index);
+		if (key?.startsWith(JOURNAL_DRAFT_STORAGE_KEY)) storage.removeItem(key);
+	}
+}
+
+export function hasJournalDraftContent(draft: JournalDraft): boolean {
+	return Boolean(
+		draft.title.trim() ||
+			draft.content.trim() ||
+			draft.themeId ||
+			Object.keys(draft.feelings).length ||
+			draft.attachedVerses.length,
+	);
+}
+
+export function isJournalDraftDirty(
+	draft: JournalDraft,
+	baseline?: Pick<
+		JournalDraft,
+		"title" | "content" | "themeId" | "feelings" | "attachedVerses"
+	> | null,
+): boolean {
+	if (!baseline) return hasJournalDraftContent(draft);
+	return (
+		draft.title !== baseline.title ||
+		draft.content !== baseline.content ||
+		draft.themeId !== baseline.themeId ||
+		JSON.stringify(draft.feelings) !== JSON.stringify(baseline.feelings) ||
+		JSON.stringify(draft.attachedVerses) !==
+			JSON.stringify(baseline.attachedVerses)
+	);
+}
+
 export function serializeJournalDraft(draft: JournalDraft): string {
 	return JSON.stringify({ ...draft, version: 2 });
 }
@@ -325,10 +364,15 @@ export function parseJournalDraft(
 				typeof parsed.journalDate === "string" && parsed.journalDate
 					? parsed.journalDate
 					: (fallbackDate ?? createInitialJournalDraft().journalDate),
-			themeId: parsed.themeId ?? null,
-			title: parsed.title ?? "",
-			content: parsed.content ?? "",
-			feelings: parsed.feelings ?? {},
+			themeId: typeof parsed.themeId === "string" ? parsed.themeId : null,
+			title: typeof parsed.title === "string" ? parsed.title : "",
+			content: typeof parsed.content === "string" ? parsed.content : "",
+			feelings:
+				parsed.feelings &&
+				typeof parsed.feelings === "object" &&
+				!Array.isArray(parsed.feelings)
+					? parsed.feelings
+					: {},
 			attachedVerses: Array.isArray(parsed.attachedVerses)
 				? parsed.attachedVerses
 				: [],

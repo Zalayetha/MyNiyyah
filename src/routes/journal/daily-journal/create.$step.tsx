@@ -17,7 +17,7 @@ import {
 	Watch,
 	X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { StepId } from "#/components/journal/daily-journal/create/steps";
 import { Button } from "#/components/ui/button";
 import {
@@ -34,7 +34,9 @@ import {
 	createInitialJournalDraft,
 	FEELING_OPTIONS,
 	getJournalDraftFeeling,
-	JOURNAL_DRAFT_STORAGE_KEY,
+	getJournalDraftStorageKey,
+	hasJournalDraftContent,
+	isJournalDraftDirty,
 	type JournalDraft,
 	type JournalDraftAttachedVerse,
 	parseJournalDraft,
@@ -46,11 +48,15 @@ import {
 	type JournalThemeOption,
 	saveJournalEntryAction,
 } from "#/lib/journal-server";
-import { KHAZANAH_VERSES } from "#/lib/khazanah-data";
+import {
+	resolveKhazanahAttachment,
+	resolveKhazanahAttachmentBySegmentIndex,
+} from "#/lib/khazanah-data";
 import type { PrayerName } from "#/lib/prayer-calculation";
 
 interface JournalSearchParams {
 	verseId?: string;
+	segmentId?: string;
 	segmentIndex?: number;
 	journalDate?: string;
 }
@@ -58,6 +64,8 @@ interface JournalSearchParams {
 export const Route = createFileRoute("/journal/daily-journal/create/$step")({
 	validateSearch: (search: Record<string, unknown>): JournalSearchParams => ({
 		verseId: typeof search.verseId === "string" ? search.verseId : undefined,
+		segmentId:
+			typeof search.segmentId === "string" ? search.segmentId : undefined,
 		segmentIndex:
 			typeof search.segmentIndex === "number"
 				? search.segmentIndex
@@ -165,29 +173,37 @@ const DEFAULT_FEELING = 2;
 
 const FEELING_LABELS = FEELING_OPTIONS.map((option) => option.label);
 
-function draftStorageKey(scope: string, date: string) {
-	return `${JOURNAL_DRAFT_STORAGE_KEY}:${scope}:${date}`;
+function draftFromExisting(
+	fallbackDate: string,
+	existing: JournalInitialData["existingEntry"],
+): JournalDraft {
+	const draft = createInitialJournalDraft(fallbackDate);
+	return {
+		...draft,
+		title: existing?.title ?? "",
+		content: existing?.content ?? "",
+		themeId: existing?.themeId ?? null,
+		feelings: existing?.feelings ?? {},
+		attachedVerses: existing?.attachedVerses ?? [],
+		expectedUpdatedAt: existing?.updatedAt ?? null,
+	};
 }
 
 function readDraft(
 	scope: string,
 	fallbackDate: string,
 	existing: JournalInitialData["existingEntry"],
-): JournalDraft {
+): { draft: JournalDraft; recovered: boolean } {
+	const baseline = draftFromExisting(fallbackDate, existing);
 	if (typeof window === "undefined")
-		return createInitialJournalDraft(fallbackDate);
-	const stored = parseJournalDraft(
-		sessionStorage.getItem(draftStorageKey(scope, fallbackDate)),
-		fallbackDate,
-	);
-	if (stored.title || stored.content || stored.expectedUpdatedAt) return stored;
-	return {
-		...stored,
-		title: existing?.title ?? "",
-		content: existing?.content ?? "",
-		themeId: existing?.themeId ?? null,
-		expectedUpdatedAt: existing?.updatedAt ?? null,
-	};
+		return { draft: baseline, recovered: false };
+	const key = getJournalDraftStorageKey(scope, fallbackDate);
+	const raw = sessionStorage.getItem(key);
+	const stored = parseJournalDraft(raw, fallbackDate);
+	if (raw && hasJournalDraftContent(stored)) {
+		return { draft: stored, recovered: true };
+	}
+	return { draft: baseline, recovered: false };
 }
 
 function displayJournalDate(date: string) {
@@ -221,6 +237,7 @@ function RouteComponent() {
 		createInitialJournalDraft(initialData.journalDate),
 	);
 	const [hasLoadedStoredDraft, setHasLoadedStoredDraft] = useState(false);
+	const [recoveredDraft, setRecoveredDraft] = useState(false);
 	const currentMetric = journalData.prayerMetrics[currentStep.prayerName];
 	const currentFeeling =
 		draft.feelings[currentStep.prayerName]?.feelingIndex ??
@@ -235,19 +252,25 @@ function RouteComponent() {
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveError, setSaveError] = useState<string | null>(null);
 	const canSaveJournal = journalData.canSaveJournal;
+	const draftBaseline = useMemo(
+		() => draftFromExisting(journalData.journalDate, journalData.existingEntry),
+		[journalData.journalDate, journalData.existingEntry],
+	);
+	const draftIsDirty = isJournalDraftDirty(draft, draftBaseline);
 
 	useEffect(() => {
 		setJournalData(initialData);
 	}, [initialData]);
 
 	useEffect(() => {
-		const storedDraft = readDraft(
+		const stored = readDraft(
 			initialData.draftScopeKey,
 			initialData.journalDate,
 			initialData.existingEntry,
 		);
-		setDraft(storedDraft);
-		setDateInput(storedDraft.journalDate);
+		setDraft(stored.draft);
+		setDateInput(stored.draft.journalDate);
+		setRecoveredDraft(stored.recovered);
 		setHasLoadedStoredDraft(true);
 	}, [
 		initialData.journalDate,
@@ -267,24 +290,67 @@ function RouteComponent() {
 
 	useEffect(() => {
 		if (typeof window === "undefined" || !hasLoadedStoredDraft) return;
-		sessionStorage.setItem(
-			draftStorageKey(initialData.draftScopeKey, draft.journalDate),
-			serializeJournalDraft(draft),
+		const key = getJournalDraftStorageKey(
+			initialData.draftScopeKey,
+			draft.journalDate,
 		);
-	}, [draft, hasLoadedStoredDraft, initialData.draftScopeKey]);
+		if (!draftIsDirty) {
+			sessionStorage.removeItem(key);
+			return;
+		}
+		sessionStorage.setItem(
+			key,
+			serializeJournalDraft({
+				...draft,
+				updatedAt: new Date().toISOString(),
+			}),
+		);
+	}, [draft, draftIsDirty, hasLoadedStoredDraft, initialData.draftScopeKey]);
+
+	useEffect(() => {
+		if (typeof window === "undefined" || !draftIsDirty) return;
+		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			event.preventDefault();
+			event.returnValue = "";
+		};
+		window.addEventListener("beforeunload", handleBeforeUnload);
+		return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+	}, [draftIsDirty]);
+
+	const discardDraft = () => {
+		const cleanDraft = draftFromExisting(
+			journalData.journalDate,
+			journalData.existingEntry,
+		);
+		if (typeof window !== "undefined") {
+			sessionStorage.removeItem(
+				getJournalDraftStorageKey(
+					initialData.draftScopeKey,
+					journalData.journalDate,
+				),
+			);
+		}
+		setDraft(cleanDraft);
+		setDateInput(cleanDraft.journalDate);
+		setRecoveredDraft(false);
+	};
 
 	useEffect(() => {
 		if (search?.verseId) {
-			const verse = KHAZANAH_VERSES.find((v) => v.id === search.verseId);
-			if (verse) {
-				const segmentIdx = search.segmentIndex ?? 0;
-				const quote = verse.segments?.[segmentIdx] ?? verse.translation ?? "";
+			const attachment = search.segmentId
+				? resolveKhazanahAttachment(search.verseId, search.segmentId)
+				: typeof search.segmentIndex === "number"
+					? resolveKhazanahAttachmentBySegmentIndex(
+							search.verseId,
+							search.segmentIndex,
+						)
+					: resolveKhazanahAttachment(search.verseId, null);
+			if (attachment) {
 				const newAttached: JournalDraftAttachedVerse = {
-					verseId: verse.id,
-					segmentId: `${verse.id}-${segmentIdx}`,
-					segmentIndex: segmentIdx,
-					surahRef: `${verse.surahName}: ${verse.verseNumber}`,
-					quoteText: quote.endsWith("....") ? quote : `${quote}....`,
+					...attachment,
+					quoteText: attachment.quoteText.endsWith("....")
+						? attachment.quoteText
+						: `${attachment.quoteText}....`,
 				};
 				setDraft((currentDraft) => {
 					if (
@@ -303,7 +369,7 @@ function RouteComponent() {
 				});
 			}
 		}
-	}, [search?.verseId, search?.segmentIndex]);
+	}, [search?.verseId, search?.segmentId, search?.segmentIndex]);
 
 	const journalSummary = calculateJournalSummary(
 		draft.feelings,
@@ -325,6 +391,19 @@ function RouteComponent() {
 				</header>
 
 				<main className="flex flex-1 flex-col">
+					{recoveredDraft && (
+						<div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm">
+							<span className="text-foreground">Draft dipulihkan.</span>
+							<button
+								type="button"
+								onClick={discardDraft}
+								className="font-semibold text-primary hover:underline"
+							>
+								Buang
+							</button>
+						</div>
+					)}
+
 					<input
 						type="text"
 						value={draft.title}
@@ -409,6 +488,9 @@ function RouteComponent() {
 							onClick={() => {
 								navigate({
 									to: "/khazanah",
+									search: {
+										returnTo: "/journal/daily-journal/create/journal-2-write",
+									},
 								});
 							}}
 						>
@@ -522,17 +604,22 @@ function RouteComponent() {
 							<Button
 								type="button"
 								className="gradient-secondary w-full font-semibold text-background hover:brightness-105"
-								onClick={() => {
-									setDraft((currentDraft) => ({
-										...currentDraft,
-										journalDate: dateInput,
-									}));
-									void getJournalInitialData({
+								onClick={async () => {
+									const nextData = await getJournalInitialData({
 										data: {
 											journalDate: dateInput,
 											timezone: journalData.timezone,
 										},
-									}).then((nextData) => setJournalData(nextData));
+									});
+									const nextDraft = readDraft(
+										nextData.draftScopeKey,
+										nextData.journalDate,
+										nextData.existingEntry,
+									);
+									setJournalData(nextData);
+									setDraft(nextDraft.draft);
+									setDateInput(nextDraft.draft.journalDate);
+									setRecoveredDraft(nextDraft.recovered);
 									setIsDateModalOpen(false);
 								}}
 							>
@@ -749,7 +836,7 @@ function RouteComponent() {
 									await saveJournalEntryAction({ data: draft });
 									if (typeof window !== "undefined") {
 										sessionStorage.removeItem(
-											draftStorageKey(
+											getJournalDraftStorageKey(
 												initialData.draftScopeKey,
 												draft.journalDate,
 											),

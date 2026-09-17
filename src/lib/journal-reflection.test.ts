@@ -4,7 +4,9 @@ import {
 	calculatePrayerMetrics,
 	createInitialJournalDraft,
 	getJournalDraftFeeling,
+	getJournalDraftStorageKey,
 	getJournalEligibility,
+	isJournalDraftDirty,
 	parseJournalDraft,
 	serializeJournalDraft,
 } from "./journal-reflection";
@@ -181,5 +183,38 @@ describe("journal reflection utilities", () => {
 		expect(parseJournalDraft("not-json", "2026-09-15").journalDate).toBe(
 			"2026-09-15",
 		);
+	});
+
+	it("scopes draft storage keys by user and date", () => {
+		expect(getJournalDraftStorageKey("user-a", "2026-09-14")).toBe(
+			"myniyyah_journal_draft_v2:user-a:2026-09-14",
+		);
+		expect(getJournalDraftStorageKey("user-b", "2026-09-14")).not.toBe(
+			getJournalDraftStorageKey("user-a", "2026-09-14"),
+		);
+	});
+
+	it("drops expired draft payloads safely", () => {
+		const expiredDraft = {
+			...createInitialJournalDraft("2026-09-14"),
+			title: "Expired",
+			updatedAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+		};
+
+		expect(
+			parseJournalDraft(JSON.stringify(expiredDraft), "2026-09-15"),
+		).toMatchObject({
+			journalDate: "2026-09-15",
+			title: "",
+		});
+	});
+
+	it("detects dirty drafts against a saved baseline", () => {
+		const baseline = createInitialJournalDraft("2026-09-14");
+		baseline.title = "Saved";
+		const draft = { ...baseline, content: "New reflection" };
+
+		expect(isJournalDraftDirty(baseline, baseline)).toBe(false);
+		expect(isJournalDraftDirty(draft, baseline)).toBe(true);
 	});
 });

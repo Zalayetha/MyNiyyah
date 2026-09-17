@@ -238,6 +238,11 @@ async function seed() {
 					],
 				);
 			}
+			await pool.query(
+				`DELETE FROM "khazanahVerseSegment"
+				 WHERE "verseId" = $1 AND position >= $2`,
+				[verse.id, verse.segments?.length ?? 0],
+			);
 		}
 	}
 }

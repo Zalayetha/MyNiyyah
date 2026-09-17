@@ -13,6 +13,7 @@ import {
 	type JournalPrayerLog,
 	type PrayerMetric,
 } from "./journal-reflection";
+import { resolveKhazanahAttachment } from "./khazanah-data";
 import {
 	calculateDailyPrayerSchedule,
 	type DailyPrayerSchedule,
@@ -70,6 +71,8 @@ export interface JournalInitialData {
 		title: string;
 		content: string;
 		themeId: string | null;
+		feelings: Partial<Record<PrayerName, JournalDraftFeeling>>;
+		attachedVerses: JournalDraftAttachedVerse[];
 	} | null;
 	journalDate: string;
 	timezone: string;
@@ -104,6 +107,8 @@ export interface JournalLibraryData {
 	total: number;
 	hasNextPage: boolean;
 }
+
+type JournalLibrarySort = "newest" | "oldest";
 
 function normalizeJournalDate(value?: string | null): string | null {
 	if (!value) return null;
@@ -176,35 +181,35 @@ function parseJournalDraftFeelings(
 	return parsed;
 }
 
-function parseAttachedVerses(value: unknown): JournalDraftAttachedVerse[] {
+function parseAttachedVerses(
+	value: unknown,
+): Pick<JournalDraftAttachedVerse, "verseId" | "segmentId">[] {
 	if (!Array.isArray(value) || value.length > 20) {
 		throw validationError("attachedVerses is invalid.");
 	}
-	return value.map((raw, index) => {
+	const deduped = new Map<
+		string,
+		Pick<JournalDraftAttachedVerse, "verseId" | "segmentId">
+	>();
+	for (const [index, raw] of value.entries()) {
 		if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
 			throw validationError(`attachedVerses[${index}] is invalid.`);
 		}
 		const verse = raw as Record<string, unknown>;
-		return {
+		const parsed = {
 			verseId: parseId(verse.verseId, `attachedVerses[${index}].verseId`),
 			segmentId:
 				verse.segmentId === null || verse.segmentId === undefined
 					? null
 					: parseId(verse.segmentId, `attachedVerses[${index}].segmentId`),
-			surahRef: parseText(
-				verse.surahRef,
-				`attachedVerses[${index}].surahRef`,
-				160,
-				{ required: true },
-			),
-			quoteText: parseText(
-				verse.quoteText,
-				`attachedVerses[${index}].quoteText`,
-				5_000,
-				{ required: true },
-			),
 		};
-	});
+		const trusted = resolveKhazanahAttachment(parsed.verseId, parsed.segmentId);
+		if (!trusted) {
+			throw validationError(`attachedVerses[${index}] is invalid.`);
+		}
+		deduped.set(`${parsed.verseId}:${parsed.segmentId ?? "whole"}`, parsed);
+	}
+	return [...deduped.values()];
 }
 
 function getIsyaScheduledAt(schedule: DailyPrayerSchedule): Date | null {
@@ -300,9 +305,31 @@ export const getJournalInitialData = createServerFn({ method: "GET" })
 					.select("prayerName", "feeling", "feelingScore", "khusyuScore")
 					.all()
 			: [];
+		const attachedVerseRows = journalEntry
+			? await db.orm.public.JournalAttachedVerse.where({
+					journalEntryId: journalEntry.id,
+				})
+					.select("verseId", "segmentId", "quoteText", "surahRef")
+					.all()
+			: [];
 		const reflectionsByPrayer = new Map(
 			reflectionRows.map((row) => [row.prayerName, row]),
 		);
+		const draftFeelings: Partial<Record<PrayerName, JournalDraftFeeling>> = {};
+		for (const row of reflectionRows) {
+			const prayerName = normalizePrayerName(row.prayerName);
+			const feelingIndex =
+				typeof row.feelingScore === "number" ? row.feelingScore - 1 : null;
+			if (feelingIndex !== null && feelingIndex >= 0 && feelingIndex <= 3) {
+				const option = FEELING_OPTIONS[feelingIndex];
+				draftFeelings[prayerName] = {
+					feelingIndex,
+					feelingLabel: option.label,
+					score: option.score,
+					khusyuScore: option.khusyuScore,
+				};
+			}
+		}
 		const logs = logRows.map((row) => ({
 			id: row.id,
 			prayerName: normalizePrayerName(row.prayerName),
@@ -335,6 +362,13 @@ export const getJournalInitialData = createServerFn({ method: "GET" })
 						title: journalEntry.title,
 						content: journalEntry.content,
 						themeId: journalEntry.themeId,
+						feelings: draftFeelings,
+						attachedVerses: attachedVerseRows.map((verse) => ({
+							verseId: verse.verseId,
+							segmentId: verse.segmentId,
+							surahRef: verse.surahRef,
+							quoteText: verse.quoteText,
+						})),
 					}
 				: null,
 			journalDate,
@@ -443,20 +477,37 @@ export const getJournalThemeEntries = createServerFn({ method: "GET" })
 	});
 
 export const getJournalLibraryData = createServerFn({ method: "GET" })
-	.validator((input: { query?: string; page?: number; pageSize?: number }) => ({
-		query:
-			typeof input?.query === "string"
-				? input.query.trim().slice(0, 100).toLowerCase()
-				: "",
-		page:
-			Number.isInteger(input?.page) && (input.page ?? 0) > 0 ? input.page : 1,
-		pageSize:
-			Number.isInteger(input?.pageSize) &&
-			(input.pageSize ?? 0) > 0 &&
-			(input.pageSize ?? 0) <= 20
-				? input.pageSize
-				: 10,
-	}))
+	.validator(
+		(input: {
+			query?: string;
+			themeId?: string;
+			fromDate?: string;
+			toDate?: string;
+			sort?: JournalLibrarySort;
+			page?: number;
+			pageSize?: number;
+		}) => ({
+			query:
+				typeof input?.query === "string"
+					? input.query.trim().slice(0, 100).toLowerCase()
+					: "",
+			themeId:
+				typeof input?.themeId === "string" && input.themeId.trim()
+					? parseId(input.themeId, "themeId")
+					: undefined,
+			fromDate: normalizeJournalDate(input?.fromDate),
+			toDate: normalizeJournalDate(input?.toDate),
+			sort: input?.sort === "oldest" ? "oldest" : "newest",
+			page:
+				Number.isInteger(input?.page) && (input.page ?? 0) > 0 ? input.page : 1,
+			pageSize:
+				Number.isInteger(input?.pageSize) &&
+				(input.pageSize ?? 0) > 0 &&
+				(input.pageSize ?? 0) <= 20
+					? input.pageSize
+					: 10,
+		}),
+	)
 	.handler(async ({ data }): Promise<JournalLibraryData> => {
 		const session = await getCurrentSession();
 		if (!session?.user) throw unauthorizedError();
@@ -481,15 +532,21 @@ export const getJournalLibraryData = createServerFn({ method: "GET" })
 		const filtered = rows
 			.filter(
 				(row) =>
-					!data.query ||
-					`${row.title} ${row.content}`.toLowerCase().includes(data.query),
+					(!data.query ||
+						`${row.title} ${row.content}`.toLowerCase().includes(data.query)) &&
+					(!data.themeId || row.themeId === data.themeId) &&
+					(!data.fromDate || row.journalDate >= data.fromDate) &&
+					(!data.toDate || row.journalDate <= data.toDate),
 			)
-			.sort(
-				(a, b) =>
-					b.journalDate.localeCompare(a.journalDate) ||
-					(normalizeInstantDate(b.updatedAt)?.getTime() ?? 0) -
-						(normalizeInstantDate(a.updatedAt)?.getTime() ?? 0),
-			);
+			.sort((a, b) => {
+				const direction = data.sort === "oldest" ? 1 : -1;
+				return (
+					direction * a.journalDate.localeCompare(b.journalDate) ||
+					direction *
+						((normalizeInstantDate(a.updatedAt)?.getTime() ?? 0) -
+							(normalizeInstantDate(b.updatedAt)?.getTime() ?? 0))
+				);
+			});
 		const start = (page - 1) * pageSize;
 		const pageRows = filtered.slice(start, start + pageSize);
 		const attached = pageRows.length
@@ -648,13 +705,18 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 			}).delete();
 
 			for (const verse of attachedVerses) {
+				const trustedVerse = resolveKhazanahAttachment(
+					verse.verseId,
+					verse.segmentId,
+				);
+				if (!trustedVerse) throw validationError("attachedVerses is invalid.");
 				await tx.orm.public.JournalAttachedVerse.create({
 					id: randomUUID(),
 					journalEntryId: entry.id,
-					verseId: verse.verseId,
-					segmentId: verse.segmentId ?? null,
-					quoteText: verse.quoteText,
-					surahRef: verse.surahRef,
+					verseId: trustedVerse.verseId,
+					segmentId: trustedVerse.segmentId,
+					quoteText: trustedVerse.quoteText,
+					surahRef: trustedVerse.surahRef,
 				});
 			}
 			return entry.id;
@@ -736,7 +798,7 @@ export const deleteJournalEntryAction = createServerFn({ method: "POST" })
 		}).first();
 
 		if (!entry) {
-			throw notFoundError("Journal entry not found");
+			return { success: true };
 		}
 
 		await db.transaction(async (tx) => {

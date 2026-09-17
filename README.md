@@ -41,7 +41,7 @@ MyNiyyah combines precision prayer schedule tracking, interactive visual progres
 - 🏠 **Visual House-Building Progression** — An SVG-driven animated house powered by Framer Motion that progressively constructs foundation, walls, roof, and door as each salah is completed.
 - 📖 **Jurnal Muhasabah Harian** — Step-by-step reflection journaling across key life themes (*Pekerjaan*, *Keluarga*, *Kesehatan*, *Teman*) with mood check-ins and Qur'anic ayat attachment.
 - 📊 **Statistik & Analisis Kekhusyuan** — Comprehensive weekly progress charts, prayer consistency rates, khusyu' percentages, and streak tracking.
-- 💎 **Khazanah Ayat & Hadits** — Categorized inspirational verses with Arabic typography, Indonesian translations, and reflective insights.
+- 💎 **Khazanah Ayat Al-Qur'an** — Categorized Qur'anic verses with Arabic typography, Indonesian translations, and reflective prompts.
 - 🎨 **Modern Glassmorphic UI & Dark Theme** — Built with Tailwind CSS v4, smooth spring physics, floating capsule bottom navigation, and tactile mobile haptics.
 - 🔐 **Authentication & Profile Management** — Integrated Better Auth session management with PostgreSQL storage and notification preference toggles.
 - ⚡ **Full-Stack SSR Performance** — Powered by TanStack Start, TanStack Router with type-safe routing, and Nitro server engine for instant hydration.
