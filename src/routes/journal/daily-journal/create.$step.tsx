@@ -165,13 +165,29 @@ const DEFAULT_FEELING = 2;
 
 const FEELING_LABELS = FEELING_OPTIONS.map((option) => option.label);
 
-function readDraft(fallbackDate: string): JournalDraft {
+function draftStorageKey(scope: string, date: string) {
+	return `${JOURNAL_DRAFT_STORAGE_KEY}:${scope}:${date}`;
+}
+
+function readDraft(
+	scope: string,
+	fallbackDate: string,
+	existing: JournalInitialData["existingEntry"],
+): JournalDraft {
 	if (typeof window === "undefined")
 		return createInitialJournalDraft(fallbackDate);
-	return parseJournalDraft(
-		sessionStorage.getItem(JOURNAL_DRAFT_STORAGE_KEY),
+	const stored = parseJournalDraft(
+		sessionStorage.getItem(draftStorageKey(scope, fallbackDate)),
 		fallbackDate,
 	);
+	if (stored.title || stored.content || stored.expectedUpdatedAt) return stored;
+	return {
+		...stored,
+		title: existing?.title ?? "",
+		content: existing?.content ?? "",
+		themeId: existing?.themeId ?? null,
+		expectedUpdatedAt: existing?.updatedAt ?? null,
+	};
 }
 
 function displayJournalDate(date: string) {
@@ -217,6 +233,7 @@ function RouteComponent() {
 	);
 	const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
+	const [saveError, setSaveError] = useState<string | null>(null);
 	const canSaveJournal = journalData.canSaveJournal;
 
 	useEffect(() => {
@@ -224,11 +241,19 @@ function RouteComponent() {
 	}, [initialData]);
 
 	useEffect(() => {
-		const storedDraft = readDraft(initialData.journalDate);
+		const storedDraft = readDraft(
+			initialData.draftScopeKey,
+			initialData.journalDate,
+			initialData.existingEntry,
+		);
 		setDraft(storedDraft);
 		setDateInput(storedDraft.journalDate);
 		setHasLoadedStoredDraft(true);
-	}, [initialData.journalDate]);
+	}, [
+		initialData.journalDate,
+		initialData.draftScopeKey,
+		initialData.existingEntry,
+	]);
 
 	useEffect(() => {
 		if (draft.journalDate === journalData.journalDate) return;
@@ -243,10 +268,10 @@ function RouteComponent() {
 	useEffect(() => {
 		if (typeof window === "undefined" || !hasLoadedStoredDraft) return;
 		sessionStorage.setItem(
-			JOURNAL_DRAFT_STORAGE_KEY,
+			draftStorageKey(initialData.draftScopeKey, draft.journalDate),
 			serializeJournalDraft(draft),
 		);
-	}, [draft, hasLoadedStoredDraft]);
+	}, [draft, hasLoadedStoredDraft, initialData.draftScopeKey]);
 
 	useEffect(() => {
 		if (search?.verseId) {
@@ -486,6 +511,14 @@ function RouteComponent() {
 							/>
 						</div>
 						<DialogFooter>
+							{saveError && (
+								<p
+									role="alert"
+									className="mb-3 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-center text-sm text-destructive"
+								>
+									{saveError}
+								</p>
+							)}
 							<Button
 								type="button"
 								className="gradient-secondary w-full font-semibold text-background hover:brightness-105"
@@ -711,15 +744,27 @@ function RouteComponent() {
 							onClick={async () => {
 								if (!canSaveJournal) return;
 								setIsSaving(true);
+								setSaveError(null);
 								try {
 									await saveJournalEntryAction({ data: draft });
 									if (typeof window !== "undefined") {
-										sessionStorage.removeItem(JOURNAL_DRAFT_STORAGE_KEY);
+										sessionStorage.removeItem(
+											draftStorageKey(
+												initialData.draftScopeKey,
+												draft.journalDate,
+											),
+										);
 									}
 									await navigate({
 										to: "/journal/daily-journal/create/$step",
 										params: { step: "journal-2-complete" },
 									});
+								} catch (cause) {
+									setSaveError(
+										cause instanceof Error
+											? cause.message
+											: "Gagal menyimpan jurnal.",
+									);
 								} finally {
 									setIsSaving(false);
 								}
@@ -728,7 +773,9 @@ function RouteComponent() {
 							{isSaving
 								? "Menyimpan..."
 								: canSaveJournal
-									? "Simpan Jurnal"
+									? journalData.existingEntry
+										? "Simpan Perubahan"
+										: "Simpan Jurnal"
 									: "Menunggu Isya"}
 						</Button>
 					</div>

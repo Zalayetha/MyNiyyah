@@ -60,28 +60,36 @@ export const saveProfileAction = createServerFn({ method: "POST" })
 			await tx.orm.public.User.where({ id: session.user.id }).update({
 				name: data.name,
 			});
-			await tx.orm.public.UserProfile.where({ userId: session.user.id }).upsert(
-				{
-					create: {
-						id: randomUUID(),
-						userId: session.user.id,
-						phone: data.phone || null,
-						bio: data.bio || null,
-						country: "Indonesia",
-					},
-					update: { phone: data.phone || null, bio: data.bio || null },
-				},
-			);
-			await tx.orm.public.UserPreference.where({
+			const profile = await tx.orm.public.UserProfile.where({
 				userId: session.user.id,
-			}).upsert({
-				create: {
+			}).first();
+			if (profile) {
+				await tx.orm.public.UserProfile.where({
+					userId: session.user.id,
+				}).update({ phone: data.phone || null, bio: data.bio || null });
+			} else {
+				await tx.orm.public.UserProfile.create({
+					id: randomUUID(),
+					userId: session.user.id,
+					phone: data.phone || null,
+					bio: data.bio || null,
+					country: "Indonesia",
+				});
+			}
+			const preference = await tx.orm.public.UserPreference.where({
+				userId: session.user.id,
+			}).first();
+			if (preference) {
+				await tx.orm.public.UserPreference.where({
+					userId: session.user.id,
+				}).update({ vibrateOnPray: data.vibrateOnPray });
+			} else {
+				await tx.orm.public.UserPreference.create({
 					id: randomUUID(),
 					userId: session.user.id,
 					vibrateOnPray: data.vibrateOnPray,
-				},
-				update: { vibrateOnPray: data.vibrateOnPray },
-			});
+				});
+			}
 		});
 		return { success: true };
 	});

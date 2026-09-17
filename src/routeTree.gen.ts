@@ -24,6 +24,7 @@ import { Route as JournalDailyJournalIndexRouteImport } from './routes/journal/d
 import { Route as JournalDailyJournalCreateRouteImport } from './routes/journal/daily-journal/create'
 import { Route as KhazanahVerseIdRouteImport } from './routes/khazanah/verse.$id'
 import { Route as JournalDailyJournalCreateStepRouteImport } from './routes/journal/daily-journal/create.$step'
+import { Route as JournalDailyJournalEntryEntryIdRouteImport } from './routes/journal/daily-journal/entry.$entryId'
 import { Route as JournalDailyJournalThemeIdRouteImport } from './routes/journal/daily-journal/theme.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -105,6 +106,12 @@ const JournalDailyJournalCreateStepRoute =
     path: '/$step',
     getParentRoute: () => JournalDailyJournalCreateRoute,
   } as any)
+const JournalDailyJournalEntryEntryIdRoute =
+  JournalDailyJournalEntryEntryIdRouteImport.update({
+    id: '/journal/daily-journal/entry/$entryId',
+    path: '/journal/daily-journal/entry/$entryId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const JournalDailyJournalThemeIdRoute =
   JournalDailyJournalThemeIdRouteImport.update({
     id: '/journal/daily-journal/theme/$id',
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/khazanah/verse/$id': typeof KhazanahVerseIdRoute
   '/journal/daily-journal/': typeof JournalDailyJournalIndexRoute
   '/journal/daily-journal/create/$step': typeof JournalDailyJournalCreateStepRoute
+  '/journal/daily-journal/entry/$entryId': typeof JournalDailyJournalEntryEntryIdRoute
   '/journal/daily-journal/theme/$id': typeof JournalDailyJournalThemeIdRoute
 }
 export interface FileRoutesByTo {
@@ -146,6 +154,7 @@ export interface FileRoutesByTo {
   '/khazanah/verse/$id': typeof KhazanahVerseIdRoute
   '/journal/daily-journal': typeof JournalDailyJournalIndexRoute
   '/journal/daily-journal/create/$step': typeof JournalDailyJournalCreateStepRoute
+  '/journal/daily-journal/entry/$entryId': typeof JournalDailyJournalEntryEntryIdRoute
   '/journal/daily-journal/theme/$id': typeof JournalDailyJournalThemeIdRoute
 }
 export interface FileRoutesById {
@@ -165,6 +174,7 @@ export interface FileRoutesById {
   '/khazanah/verse/$id': typeof KhazanahVerseIdRoute
   '/journal/daily-journal/': typeof JournalDailyJournalIndexRoute
   '/journal/daily-journal/create/$step': typeof JournalDailyJournalCreateStepRoute
+  '/journal/daily-journal/entry/$entryId': typeof JournalDailyJournalEntryEntryIdRoute
   '/journal/daily-journal/theme/$id': typeof JournalDailyJournalThemeIdRoute
 }
 export interface FileRouteTypes {
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/khazanah/verse/$id'
     | '/journal/daily-journal/'
     | '/journal/daily-journal/create/$step'
+    | '/journal/daily-journal/entry/$entryId'
     | '/journal/daily-journal/theme/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -203,6 +214,7 @@ export interface FileRouteTypes {
     | '/khazanah/verse/$id'
     | '/journal/daily-journal'
     | '/journal/daily-journal/create/$step'
+    | '/journal/daily-journal/entry/$entryId'
     | '/journal/daily-journal/theme/$id'
   id:
     | '__root__'
@@ -221,6 +233,7 @@ export interface FileRouteTypes {
     | '/khazanah/verse/$id'
     | '/journal/daily-journal/'
     | '/journal/daily-journal/create/$step'
+    | '/journal/daily-journal/entry/$entryId'
     | '/journal/daily-journal/theme/$id'
   fileRoutesById: FileRoutesById
 }
@@ -239,6 +252,7 @@ export interface RootRouteChildren {
   JournalDailyJournalCreateRoute: typeof JournalDailyJournalCreateRouteWithChildren
   KhazanahVerseIdRoute: typeof KhazanahVerseIdRoute
   JournalDailyJournalIndexRoute: typeof JournalDailyJournalIndexRoute
+  JournalDailyJournalEntryEntryIdRoute: typeof JournalDailyJournalEntryEntryIdRoute
   JournalDailyJournalThemeIdRoute: typeof JournalDailyJournalThemeIdRoute
 }
 
@@ -349,6 +363,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JournalDailyJournalCreateStepRouteImport
       parentRoute: typeof JournalDailyJournalCreateRoute
     }
+    '/journal/daily-journal/entry/$entryId': {
+      id: '/journal/daily-journal/entry/$entryId'
+      path: '/journal/daily-journal/entry/$entryId'
+      fullPath: '/journal/daily-journal/entry/$entryId'
+      preLoaderRoute: typeof JournalDailyJournalEntryEntryIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/journal/daily-journal/theme/$id': {
       id: '/journal/daily-journal/theme/$id'
       path: '/journal/daily-journal/theme/$id'
@@ -388,6 +409,7 @@ const rootRouteChildren: RootRouteChildren = {
   JournalDailyJournalCreateRoute: JournalDailyJournalCreateRouteWithChildren,
   KhazanahVerseIdRoute: KhazanahVerseIdRoute,
   JournalDailyJournalIndexRoute: JournalDailyJournalIndexRoute,
+  JournalDailyJournalEntryEntryIdRoute: JournalDailyJournalEntryEntryIdRoute,
   JournalDailyJournalThemeIdRoute: JournalDailyJournalThemeIdRoute,
 }
 export const routeTree = rootRouteImport

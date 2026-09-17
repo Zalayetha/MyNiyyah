@@ -192,6 +192,17 @@ export function AccountSection({
 					type="button"
 					className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border border-destructive/50 bg-destructive/10 p-4 transition-colors hover:bg-destructive/20 outline-none focus-visible:ring-2 focus-visible:ring-destructive/70 focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none"
 					onClick={async () => {
+						if (typeof window !== "undefined") {
+							for (
+								let index = sessionStorage.length - 1;
+								index >= 0;
+								index -= 1
+							) {
+								const key = sessionStorage.key(index);
+								if (key?.startsWith("myniyyah_journal_draft"))
+									sessionStorage.removeItem(key);
+							}
+						}
 						if ("vibrate" in navigator) navigator.vibrate(10);
 						await authClient.signOut();
 						await navigate({ to: "/login" });

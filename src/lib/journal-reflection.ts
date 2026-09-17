@@ -16,7 +16,8 @@ import {
 	normalizeInstantDate,
 } from "./timezone";
 
-export const JOURNAL_DRAFT_STORAGE_KEY = "myniyyah_journal_draft";
+export const JOURNAL_DRAFT_STORAGE_KEY = "myniyyah_journal_draft_v2";
+export const JOURNAL_DRAFT_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type FeelingLabel = "Ngantuk" | "Berat" | "Tenang" | "Khusyu'";
 export type PunctualityLabel =
@@ -81,12 +82,15 @@ export interface JournalDraftAttachedVerse {
 }
 
 export interface JournalDraft {
+	version: 2;
+	updatedAt: string;
 	journalDate: string;
 	themeId: string | null;
 	title: string;
 	content: string;
 	feelings: Partial<Record<PrayerName, JournalDraftFeeling>>;
 	attachedVerses: JournalDraftAttachedVerse[];
+	expectedUpdatedAt?: string | null;
 }
 
 export interface JournalSummary {
@@ -280,6 +284,8 @@ export function createInitialJournalDraft(
 	date = formatLocalDate(new Date(), "Asia/Jakarta"),
 ): JournalDraft {
 	return {
+		version: 2,
+		updatedAt: new Date().toISOString(),
 		journalDate: date,
 		themeId: null,
 		title: "",
@@ -290,7 +296,7 @@ export function createInitialJournalDraft(
 }
 
 export function serializeJournalDraft(draft: JournalDraft): string {
-	return JSON.stringify(draft);
+	return JSON.stringify({ ...draft, version: 2 });
 }
 
 export function parseJournalDraft(
@@ -300,9 +306,21 @@ export function parseJournalDraft(
 	if (!raw) return createInitialJournalDraft(fallbackDate);
 	try {
 		const parsed = JSON.parse(raw) as Partial<JournalDraft>;
+		if (parsed.version !== 2 || typeof parsed.updatedAt !== "string") {
+			return createInitialJournalDraft(fallbackDate);
+		}
+		const updatedAt = Date.parse(parsed.updatedAt);
+		if (
+			!Number.isFinite(updatedAt) ||
+			Date.now() - updatedAt > JOURNAL_DRAFT_MAX_AGE_MS
+		) {
+			return createInitialJournalDraft(fallbackDate);
+		}
 		return {
 			...createInitialJournalDraft(fallbackDate),
 			...parsed,
+			version: 2,
+			updatedAt: parsed.updatedAt,
 			journalDate:
 				typeof parsed.journalDate === "string" && parsed.journalDate
 					? parsed.journalDate

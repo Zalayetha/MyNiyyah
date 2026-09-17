@@ -6,6 +6,7 @@ import {
 	calculateDailyPrayerMetrics,
 	calculateJournalSummary,
 	FEELING_OPTIONS,
+	getJournalEligibility,
 	type JournalDraft,
 	type JournalDraftAttachedVerse,
 	type JournalDraftFeeling,
@@ -21,6 +22,7 @@ import {
 import { getCalculationMethodValues } from "./prayer-method-server";
 import { db } from "./prisma";
 import {
+	conflictError,
 	notFoundError,
 	unauthorizedError,
 	validationError,
@@ -61,6 +63,14 @@ export interface JournalThemeOption {
 }
 
 export interface JournalInitialData {
+	draftScopeKey: string;
+	existingEntry: {
+		id: string;
+		updatedAt: string;
+		title: string;
+		content: string;
+		themeId: string | null;
+	} | null;
 	journalDate: string;
 	timezone: string;
 	timezoneAbbreviation: string;
@@ -85,6 +95,14 @@ export interface JournalThemeEntry {
 export interface JournalThemeEntriesData {
 	theme: JournalThemeOption | null;
 	entries: JournalThemeEntry[];
+}
+
+export interface JournalLibraryData {
+	entries: JournalThemeEntry[];
+	page: number;
+	pageSize: number;
+	total: number;
+	hasNextPage: boolean;
 }
 
 function normalizeJournalDate(value?: string | null): string | null {
@@ -191,11 +209,6 @@ function parseAttachedVerses(value: unknown): JournalDraftAttachedVerse[] {
 
 function getIsyaScheduledAt(schedule: DailyPrayerSchedule): Date | null {
 	return schedule.items.find((item) => item.id === "isya")?.scheduledAt ?? null;
-}
-
-function hasIsyaTimeArrived(schedule: DailyPrayerSchedule, now = new Date()) {
-	const isyaScheduledAt = getIsyaScheduledAt(schedule);
-	return Boolean(isyaScheduledAt && now.getTime() >= isyaScheduledAt.getTime());
 }
 
 async function getUserLocationPreference(userId: string) {
@@ -305,8 +318,25 @@ export const getJournalInitialData = createServerFn({ method: "GET" })
 			timezone,
 			timezoneOffset,
 		);
+		const eligibility = getJournalEligibility({
+			journalDate,
+			todayDate: formatLocalDate(new Date(), timezone),
+			isyaAt: getIsyaScheduledAt(schedule),
+			referenceDate: new Date(),
+			isExisting: Boolean(journalEntry),
+		});
 
 		return {
+			draftScopeKey: userId,
+			existingEntry: journalEntry
+				? {
+						id: journalEntry.id,
+						updatedAt: serializeInstant(journalEntry.updatedAt) ?? "",
+						title: journalEntry.title,
+						content: journalEntry.content,
+						themeId: journalEntry.themeId,
+					}
+				: null,
 			journalDate,
 			timezone,
 			timezoneAbbreviation,
@@ -319,7 +349,7 @@ export const getJournalInitialData = createServerFn({ method: "GET" })
 				timezoneAbbreviation,
 			),
 			themes: await getThemesWithCounts(userId),
-			canSaveJournal: hasIsyaTimeArrived(schedule),
+			canSaveJournal: eligibility.canCreate || eligibility.canEdit,
 			isyaScheduledAt: getIsyaScheduledAt(schedule)?.toISOString() ?? null,
 		};
 	});
@@ -412,6 +442,86 @@ export const getJournalThemeEntries = createServerFn({ method: "GET" })
 		};
 	});
 
+export const getJournalLibraryData = createServerFn({ method: "GET" })
+	.validator((input: { query?: string; page?: number; pageSize?: number }) => ({
+		query:
+			typeof input?.query === "string"
+				? input.query.trim().slice(0, 100).toLowerCase()
+				: "",
+		page:
+			Number.isInteger(input?.page) && (input.page ?? 0) > 0 ? input.page : 1,
+		pageSize:
+			Number.isInteger(input?.pageSize) &&
+			(input.pageSize ?? 0) > 0 &&
+			(input.pageSize ?? 0) <= 20
+				? input.pageSize
+				: 10,
+	}))
+	.handler(async ({ data }): Promise<JournalLibraryData> => {
+		const session = await getCurrentSession();
+		if (!session?.user) throw unauthorizedError();
+		setPrivateCacheControl();
+		const page = data.page ?? 1;
+		const pageSize = data.pageSize ?? 10;
+		const rows = await db.orm.public.JournalEntry.where({
+			userId: session.user.id,
+		})
+			.select(
+				"id",
+				"title",
+				"content",
+				"journalDate",
+				"khusyuPercentage",
+				"punctualityPercentage",
+				"updatedAt",
+				"themeId",
+			)
+			.limit(200)
+			.all();
+		const filtered = rows
+			.filter(
+				(row) =>
+					!data.query ||
+					`${row.title} ${row.content}`.toLowerCase().includes(data.query),
+			)
+			.sort(
+				(a, b) =>
+					b.journalDate.localeCompare(a.journalDate) ||
+					(normalizeInstantDate(b.updatedAt)?.getTime() ?? 0) -
+						(normalizeInstantDate(a.updatedAt)?.getTime() ?? 0),
+			);
+		const start = (page - 1) * pageSize;
+		const pageRows = filtered.slice(start, start + pageSize);
+		const attached = pageRows.length
+			? await db.orm.public.JournalAttachedVerse.where((verse) =>
+					verse.journalEntryId.in(pageRows.map((row) => row.id)),
+				)
+					.select("journalEntryId")
+					.all()
+			: [];
+		const counts = new Map<string, number>();
+		for (const verse of attached)
+			counts.set(
+				verse.journalEntryId,
+				(counts.get(verse.journalEntryId) ?? 0) + 1,
+			);
+		return {
+			entries: pageRows.map((row) => ({
+				id: row.id,
+				title: row.title,
+				content: row.content,
+				journalDate: row.journalDate,
+				khusyuPercentage: row.khusyuPercentage,
+				punctualityPercentage: row.punctualityPercentage,
+				attachedVerseCount: counts.get(row.id) ?? 0,
+			})),
+			page,
+			pageSize,
+			total: filtered.length,
+			hasNextPage: start + pageSize < filtered.length,
+		};
+	});
+
 export const saveJournalEntryAction = createServerFn({ method: "POST" })
 	.validator((input: JournalDraft) => input)
 	.handler(async ({ data }) => {
@@ -432,9 +542,26 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 		const initialData = await getJournalInitialData({
 			data: { journalDate },
 		});
-		if (!hasIsyaTimeArrived(initialData.schedule)) {
-			throw new Error(
-				"Jurnal harian baru bisa disimpan setelah waktu Isya tiba.",
+		const eligibility = getJournalEligibility({
+			journalDate,
+			todayDate: formatLocalDate(new Date(), initialData.timezone),
+			isyaAt: initialData.isyaScheduledAt,
+			referenceDate: new Date(),
+			isExisting: Boolean(initialData.existingEntry),
+		});
+		if (!eligibility.canCreate && !eligibility.canEdit) {
+			throw validationError(
+				eligibility.reason === "future-date"
+					? "Jurnal untuk tanggal mendatang tidak dapat dibuat."
+					: "Jurnal hari ini bisa disimpan setelah waktu Isya tiba.",
+			);
+		}
+		if (
+			initialData.existingEntry &&
+			data.expectedUpdatedAt !== initialData.existingEntry.updatedAt
+		) {
+			throw conflictError(
+				"Jurnal ini berubah di perangkat lain. Muat ulang sebelum menyimpan.",
 			);
 		}
 
@@ -443,28 +570,39 @@ export const saveJournalEntryAction = createServerFn({ method: "POST" })
 			initialData.prayerMetrics,
 		);
 		const journalEntryId = await db.transaction(async (tx) => {
-			const entry = await tx.orm.public.JournalEntry.where({
+			const existingEntry = await tx.orm.public.JournalEntry.where({
 				userId,
 				journalDate,
-			}).upsert({
-				create: {
-					id: randomUUID(),
-					userId,
-					journalDate,
-					themeId,
-					title,
-					content,
-					khusyuPercentage: summary.khusyuPercentage,
-					punctualityPercentage: summary.punctualityPercentage,
-				},
-				update: {
-					themeId,
-					title,
-					content,
-					khusyuPercentage: summary.khusyuPercentage,
-					punctualityPercentage: summary.punctualityPercentage,
-				},
-			});
+			}).first();
+			if (
+				existingEntry &&
+				data.expectedUpdatedAt !== serializeInstant(existingEntry.updatedAt)
+			) {
+				throw conflictError(
+					"Jurnal ini berubah di perangkat lain. Muat ulang sebelum menyimpan.",
+				);
+			}
+			const entry = existingEntry
+				? await tx.orm.public.JournalEntry.where({
+						id: existingEntry.id,
+					}).update({
+						themeId,
+						title,
+						content,
+						khusyuPercentage: summary.khusyuPercentage,
+						punctualityPercentage: summary.punctualityPercentage,
+					})
+				: await tx.orm.public.JournalEntry.create({
+						id: randomUUID(),
+						userId,
+						journalDate,
+						themeId,
+						title,
+						content,
+						khusyuPercentage: summary.khusyuPercentage,
+						punctualityPercentage: summary.punctualityPercentage,
+					});
+			if (!entry) throw new Error("Journal entry could not be saved.");
 			await tx.orm.public.JournalPrayerReflection.where({
 				journalEntryId: entry.id,
 			}).delete();
@@ -557,9 +695,29 @@ export const getJournalEntryById = createServerFn({ method: "GET" })
 		]);
 
 		return {
-			entry,
-			reflections,
-			attachedVerses,
+			entry: {
+				id: entry.id,
+				journalDate: entry.journalDate,
+				themeId: entry.themeId,
+				title: entry.title,
+				content: entry.content,
+				khusyuPercentage: entry.khusyuPercentage,
+				punctualityPercentage: entry.punctualityPercentage,
+				updatedAt: serializeInstant(entry.updatedAt),
+			},
+			reflections: reflections.map((reflection) => ({
+				prayerName: reflection.prayerName,
+				feeling: reflection.feeling,
+				feelingScore: reflection.feelingScore,
+				khusyuScore: reflection.khusyuScore,
+				punctuality: reflection.punctuality,
+			})),
+			attachedVerses: attachedVerses.map((verse) => ({
+				verseId: verse.verseId,
+				segmentId: verse.segmentId,
+				quoteText: verse.quoteText,
+				surahRef: verse.surahRef,
+			})),
 		};
 	});
 
@@ -581,10 +739,18 @@ export const deleteJournalEntryAction = createServerFn({ method: "POST" })
 			throw notFoundError("Journal entry not found");
 		}
 
-		await db.orm.public.JournalEntry.where({
-			id: entry.id,
-			userId: session.user.id,
-		}).delete();
+		await db.transaction(async (tx) => {
+			await tx.orm.public.JournalPrayerReflection.where({
+				journalEntryId: entry.id,
+			}).delete();
+			await tx.orm.public.JournalAttachedVerse.where({
+				journalEntryId: entry.id,
+			}).delete();
+			await tx.orm.public.JournalEntry.where({
+				id: entry.id,
+				userId: session.user.id,
+			}).delete();
+		});
 
 		return { success: true };
 	});
