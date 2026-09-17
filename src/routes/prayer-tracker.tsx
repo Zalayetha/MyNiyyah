@@ -12,7 +12,7 @@ import {
 	Sunrise,
 	Sunset,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SwipeToPray } from "#/components/SwipeToPray";
 import {
 	getPrayerWindowDetails,
@@ -247,13 +247,19 @@ function PrayerTrackerPage() {
 		formatLocalTime(new Date(), data.timezone, "."),
 	);
 	const [now, setNow] = useState(() => new Date());
+	const [actionError, setActionError] = useState<string | null>(null);
+	const timezoneRequested = useRef<string | null>(null);
+	const rolloverRequested = useRef<string | null>(null);
 
-	// Client-side real-time timezone detection
 	useEffect(() => {
 		const clientTz = getBrowserTimezone();
-		if (clientTz && clientTz !== data.timezone) {
+		if (
+			clientTz &&
+			clientTz !== data.timezone &&
+			timezoneRequested.current !== clientTz
+		) {
+			timezoneRequested.current = clientTz;
 			const clientDate = formatLocalDate(new Date(), clientTz);
-			setActiveTimezone(clientTz);
 			void getPrayerTrackerData({
 				data: {
 					clientTimezone: clientTz,
@@ -261,9 +267,26 @@ function PrayerTrackerPage() {
 				},
 			}).then((refreshed) => {
 				setData(refreshed);
+				setActiveTimezone(refreshed.timezone);
 			});
 		}
 	}, [data.timezone]);
+
+	useEffect(() => {
+		const interval = setInterval(() => {
+			const localDate = formatLocalDate(new Date(), data.timezone);
+			if (
+				localDate === data.prayerDate ||
+				rolloverRequested.current === localDate
+			)
+				return;
+			rolloverRequested.current = localDate;
+			void getPrayerTrackerData({
+				data: { clientLocalDate: localDate, clientTimezone: data.timezone },
+			}).then(setData);
+		}, 30_000);
+		return () => clearInterval(interval);
+	}, [data.prayerDate, data.timezone]);
 
 	// Real-time ticking clock and interval for prayer time window transitions
 	useEffect(() => {
@@ -275,24 +298,23 @@ function PrayerTrackerPage() {
 		return () => clearInterval(interval);
 	}, [activeTimezone]);
 
-	// Set of completed prayer names
-	const completedPrayerNames = useMemo(() => {
-		const set = new Set<PrayerName>();
+	const prayerCompletions = useMemo(() => {
+		const completions = new Map<PrayerName, string | null>();
 		for (const [key, value] of Object.entries(data.logs)) {
 			if (value.completed) {
-				set.add(key as PrayerName);
+				completions.set(key as PrayerName, value.completedAt);
 			}
 		}
-		return set;
+		return completions;
 	}, [data.logs]);
 
-	const completedCount = completedPrayerNames.size;
+	const completedCount = prayerCompletions.size;
 	const isAllComplete = completedCount >= PRAYER_METAS.length;
 
-	// Calculate contextual window details (completed, active, upcoming, missed)
+	// Calculate contextual window details from schedule and recorded completions.
 	const prayerDetails = useMemo(() => {
-		return getPrayerWindowDetails(data.schedule, completedPrayerNames, now);
-	}, [data.schedule, completedPrayerNames, now]);
+		return getPrayerWindowDetails(data.schedule, prayerCompletions, now);
+	}, [data.schedule, prayerCompletions, now]);
 
 	const detailMap = useMemo(() => {
 		return new Map(prayerDetails.map((item) => [item.id, item]));
@@ -311,10 +333,10 @@ function PrayerTrackerPage() {
 	const [selectedPrayerIndex, setSelectedPrayerIndex] = useState(() => {
 		const initialDetails = getPrayerWindowDetails(
 			initialData.schedule,
-			new Set(
+			new Map(
 				Object.entries(initialData.logs)
-					.filter(([, v]) => v.completed)
-					.map(([k]) => k as PrayerName),
+					.filter(([, value]) => value.completed)
+					.map(([key, value]) => [key as PrayerName, value.completedAt]),
 			),
 			new Date(),
 		);
@@ -337,13 +359,16 @@ function PrayerTrackerPage() {
 	const tzAbbr = getTimezoneAbbreviation(activeTimezone, offsetHours);
 
 	// Handle Swipe to Pray unlock with validation
-	const handleUnlock = async () => {
+	const handleUnlock = async (): Promise<boolean> => {
 		const prayerToComplete = currentPrayerMeta.id;
 		const currentStatus = detailMap.get(prayerToComplete);
 
 		if (!currentStatus?.canTrack) {
-			return;
+			return false;
 		}
+		setActionError(null);
+		const previousData = data;
+		const completedAt = new Date().toISOString();
 
 		// Optimistic UI update
 		setData((prev) => ({
@@ -352,44 +377,37 @@ function PrayerTrackerPage() {
 				...prev.logs,
 				[prayerToComplete]: {
 					completed: true,
-					completedAt: new Date().toISOString(),
+					completedAt,
 					status: "completed",
 				},
 			},
 			completedCount: prev.completedCount + 1,
 		}));
 
-		// Advance to next active or upcoming uncompleted prayer
-		setTimeout(() => {
-			setSelectedPrayerIndex((prevIndex) => {
-				for (let i = prevIndex + 1; i < PRAYER_METAS.length; i++) {
-					const detail = detailMap.get(PRAYER_METAS[i].id);
-					if (detail && detail.status !== "completed") {
-						return i;
-					}
-				}
-				for (let i = 0; i < prevIndex; i++) {
-					const detail = detailMap.get(PRAYER_METAS[i].id);
-					if (detail && detail.status !== "completed") {
-						return i;
-					}
-				}
-				return prevIndex;
-			});
-			setSliderKey((prev) => prev + 1);
-		}, 600);
-
-		// Persist to database via server function
 		try {
 			await completePrayerAction({
 				data: {
 					prayerName: prayerToComplete,
 					prayerDate: data.prayerDate,
-					completedAt: new Date().toISOString(),
 				},
 			});
+			setSelectedPrayerIndex((prevIndex) => {
+				const next = PRAYER_METAS.findIndex(
+					(meta, index) => index > prevIndex && !data.logs[meta.id].completed,
+				);
+				return next >= 0 ? next : prevIndex;
+			});
+			setSliderKey((prev) => prev + 1);
+			return true;
 		} catch (error) {
 			console.error("Failed to complete prayer log:", error);
+			setData(previousData);
+			setActionError(
+				error instanceof Error
+					? error.message
+					: "Gagal menyimpan catatan solat.",
+			);
+			return false;
 		}
 	};
 
@@ -406,10 +424,10 @@ function PrayerTrackerPage() {
 					</h1>
 					<div
 						className={`mt-1 text-center font-medium text-sm ${
-							currentPrayerDetail.status === "completed"
+							currentPrayerDetail.status.startsWith("completed")
 								? "text-primary"
-								: currentPrayerDetail.status === "missed"
-									? "text-destructive"
+								: currentPrayerDetail.status === "not-logged"
+									? "text-muted-foreground"
 									: currentPrayerDetail.status === "active"
 										? "text-foreground"
 										: "text-muted-foreground"
@@ -452,16 +470,16 @@ function PrayerTrackerPage() {
 					const isSelected = index === selectedPrayerIndex;
 
 					let pillClass = "text-muted-foreground hover:text-foreground";
-					if (status === "completed") {
+					if (status.startsWith("completed")) {
 						pillClass = "bg-primary text-primary-foreground";
 					} else if (status === "active") {
 						pillClass = isSelected
 							? "bg-card text-foreground ring-2 ring-primary"
 							: "bg-card text-foreground ring-1 ring-ring";
-					} else if (status === "missed") {
+					} else if (status === "not-logged") {
 						pillClass = isSelected
-							? "bg-destructive/15 text-destructive ring-2 ring-destructive/40"
-							: "bg-destructive/10 text-destructive/80";
+							? "bg-card text-foreground ring-2 ring-border"
+							: "bg-card text-muted-foreground ring-1 ring-border";
 					} else if (isSelected) {
 						pillClass = "bg-card text-foreground ring-1 ring-border";
 					}
@@ -485,10 +503,10 @@ function PrayerTrackerPage() {
 								className={`text-sm ${
 									isSelected
 										? "font-semibold text-foreground"
-										: status === "completed"
+										: status.startsWith("completed")
 											? "font-medium text-foreground"
-											: status === "missed"
-												? "text-destructive/80"
+											: status === "not-logged"
+												? "text-muted-foreground"
 												: "text-muted-foreground"
 								}`}
 							>
@@ -505,7 +523,7 @@ function PrayerTrackerPage() {
 					<CheckCircle2 className="size-5" />
 					<span>Alhamdulillah, semua solat hari ini selesai.</span>
 				</div>
-			) : currentPrayerDetail.status === "completed" ? (
+			) : currentPrayerDetail.status.startsWith("completed") ? (
 				<div className="mx-8 mt-8 flex items-center justify-center gap-2 rounded-4xl bg-primary/10 border border-primary/25 px-6 py-5 text-center font-medium text-primary shadow-sm">
 					<CheckCircle2 className="size-5" />
 					<span>Solat {currentPrayerMeta.name} telah ditunaikan.</span>
@@ -521,23 +539,33 @@ function PrayerTrackerPage() {
 						{tzAbbr}.
 					</p>
 				</div>
-			) : currentPrayerDetail.status === "missed" ? (
-				<div className="mx-8 mt-8 flex flex-col items-center justify-center rounded-4xl border border-destructive/30 bg-destructive/10 px-6 py-5 text-center shadow-sm">
-					<div className="flex items-center gap-2 font-semibold text-destructive text-sm">
+			) : currentPrayerDetail.status === "not-logged" &&
+				!currentPrayerDetail.canTrack ? (
+				<div className="mx-8 mt-8 flex flex-col items-center justify-center rounded-4xl border border-border bg-card px-6 py-5 text-center shadow-sm">
+					<div className="flex items-center gap-2 font-semibold text-foreground text-sm">
 						<AlertCircle className="size-4" />
-						<span>Waktu Telah Lewat</span>
+						<span>Belum Dicatat</span>
 					</div>
-					<p className="mt-1 text-destructive/80 text-xs">
-						Waktu solat {currentPrayerMeta.name} telah berakhir dan terlewat.
+					<p className="mt-1 text-muted-foreground text-xs">
+						Tidak ada catatan solat {currentPrayerMeta.name} untuk hari ini.
 					</p>
 				</div>
 			) : (
 				<SwipeToPray
 					key={sliderKey}
 					onUnlock={handleUnlock}
+					hapticsEnabled={initialData.hapticsEnabled}
 					className="m-8"
 					text={`Geser selesai ${currentPrayerMeta.name}`}
 				/>
+			)}
+			{actionError && (
+				<div
+					className="mx-8 mb-8 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-center text-destructive text-sm"
+					role="alert"
+				>
+					{actionError} Coba lagi.
+				</div>
 			)}
 		</div>
 	);

@@ -4,6 +4,9 @@ import {
 	calculatePrayerMetrics,
 	createInitialJournalDraft,
 	getJournalDraftFeeling,
+	getJournalDraftStorageKey,
+	getJournalEligibility,
+	isJournalDraftDirty,
 	parseJournalDraft,
 	serializeJournalDraft,
 } from "./journal-reflection";
@@ -56,7 +59,7 @@ describe("journal reflection utilities", () => {
 		expect(metric.punctuality).toBe("Terlambat");
 	});
 
-	it("marks missing or pending logs as Tidak Ditunaikan", () => {
+	it("marks missing or pending logs as Belum Dicatat", () => {
 		const missing = calculatePrayerMetrics(scheduleItem, null);
 		const pending = calculatePrayerMetrics(scheduleItem, {
 			prayerName: "subuh",
@@ -64,9 +67,9 @@ describe("journal reflection utilities", () => {
 			completedAt: new Date("2026-09-13T22:00:00.000Z"),
 		});
 
-		expect(missing.punctuality).toBe("Tidak Ditunaikan");
-		expect(missing.completedAt).toBe("Belum ditunaikan");
-		expect(pending.punctuality).toBe("Tidak Ditunaikan");
+		expect(missing.punctuality).toBe("Belum Dicatat");
+		expect(missing.completedAt).toBe("Belum dicatat");
+		expect(pending.punctuality).toBe("Belum Dicatat");
 		expect(pending.differenceMinutes).toBeNull();
 	});
 
@@ -80,16 +83,95 @@ describe("journal reflection utilities", () => {
 				isya: getJournalDraftFeeling(3),
 			},
 			{
-				subuh: { differenceMinutes: 30 },
-				zhuhur: { differenceMinutes: 60 },
-				ashar: { differenceMinutes: 61 },
-				maghrib: { differenceMinutes: null },
-				isya: { differenceMinutes: 0 },
+				subuh: {
+					scheduledAt: "2026-09-14T00:00:00Z",
+					completedAtIso: "2026-09-14T00:30:00Z",
+					onTimeWindowEndAt: "2026-09-14T04:00:00Z",
+				},
+				zhuhur: {
+					scheduledAt: "2026-09-14T04:00:00Z",
+					completedAtIso: "2026-09-14T05:00:00Z",
+					onTimeWindowEndAt: "2026-09-14T08:00:00Z",
+				},
+				ashar: {
+					scheduledAt: "2026-09-14T08:00:00Z",
+					completedAtIso: "2026-09-14T11:01:00Z",
+					onTimeWindowEndAt: "2026-09-14T11:00:00Z",
+				},
+				maghrib: {
+					scheduledAt: "2026-09-14T11:00:00Z",
+					completedAtIso: null,
+					onTimeWindowEndAt: "2026-09-14T12:00:00Z",
+				},
+				isya: {
+					scheduledAt: "2026-09-14T12:00:00Z",
+					completedAtIso: "2026-09-14T12:05:00Z",
+					onTimeWindowEndAt: "2026-09-14T21:00:00Z",
+				},
 			},
 		);
 
 		expect(summary.khusyuPercentage).toBe(70);
-		expect(summary.punctualityPercentage).toBe(60);
+		expect(summary.punctualityPercentage).toBe(75);
+		expect(summary.khusyuSampleSize).toBe(5);
+		expect(summary.punctualitySampleSize).toBe(4);
+	});
+
+	it("excludes unanswered feelings from the khusyu average", () => {
+		const summary = calculateJournalSummary(
+			{ subuh: getJournalDraftFeeling(3), ashar: getJournalDraftFeeling(1) },
+			{},
+		);
+		expect(summary.khusyuPercentage).toBe(75);
+		expect(summary.khusyuSampleSize).toBe(2);
+		expect(summary.punctualitySampleSize).toBe(0);
+	});
+
+	it("enforces journal create and edit eligibility by local date and Isya", () => {
+		const base = {
+			todayDate: "2026-09-14",
+			isyaAt: "2026-09-14T12:00:00Z",
+		};
+		expect(
+			getJournalEligibility({
+				...base,
+				journalDate: "2026-09-15",
+				referenceDate: new Date("2026-09-14T13:00:00Z"),
+			}),
+		).toMatchObject({
+			canCreate: false,
+			canEdit: false,
+			reason: "future-date",
+		});
+		expect(
+			getJournalEligibility({
+				...base,
+				journalDate: "2026-09-14",
+				referenceDate: new Date("2026-09-14T11:59:59Z"),
+			}),
+		).toMatchObject({ canCreate: false, reason: "day-in-progress" });
+		expect(
+			getJournalEligibility({
+				...base,
+				journalDate: "2026-09-14",
+				referenceDate: new Date("2026-09-14T12:00:00Z"),
+			}),
+		).toMatchObject({ canCreate: true, reason: "eligible" });
+		expect(
+			getJournalEligibility({
+				...base,
+				journalDate: "2026-09-13",
+				referenceDate: new Date("2026-09-14T10:00:00Z"),
+			}),
+		).toMatchObject({ canCreate: true, canEdit: false });
+		expect(
+			getJournalEligibility({
+				...base,
+				journalDate: "2026-09-14",
+				referenceDate: new Date("2026-09-14T10:00:00Z"),
+				isExisting: true,
+			}),
+		).toMatchObject({ canCreate: false, canEdit: true });
 	});
 
 	it("round-trips journal draft serialization", () => {
@@ -101,5 +183,38 @@ describe("journal reflection utilities", () => {
 		expect(parseJournalDraft("not-json", "2026-09-15").journalDate).toBe(
 			"2026-09-15",
 		);
+	});
+
+	it("scopes draft storage keys by user and date", () => {
+		expect(getJournalDraftStorageKey("user-a", "2026-09-14")).toBe(
+			"myniyyah_journal_draft_v2:user-a:2026-09-14",
+		);
+		expect(getJournalDraftStorageKey("user-b", "2026-09-14")).not.toBe(
+			getJournalDraftStorageKey("user-a", "2026-09-14"),
+		);
+	});
+
+	it("drops expired draft payloads safely", () => {
+		const expiredDraft = {
+			...createInitialJournalDraft("2026-09-14"),
+			title: "Expired",
+			updatedAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString(),
+		};
+
+		expect(
+			parseJournalDraft(JSON.stringify(expiredDraft), "2026-09-15"),
+		).toMatchObject({
+			journalDate: "2026-09-15",
+			title: "",
+		});
+	});
+
+	it("detects dirty drafts against a saved baseline", () => {
+		const baseline = createInitialJournalDraft("2026-09-14");
+		baseline.title = "Saved";
+		const draft = { ...baseline, content: "New reflection" };
+
+		expect(isJournalDraftDirty(baseline, baseline)).toBe(false);
+		expect(isJournalDraftDirty(draft, baseline)).toBe(true);
 	});
 });

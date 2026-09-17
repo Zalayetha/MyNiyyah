@@ -20,7 +20,7 @@ function RouteComponent() {
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background pb-24">
 			<div className="flex flex-row justify-between px-4 py-8">
-				<Link to="/journal/daily-journal">
+				<Link to="/journal/daily-journal" search={{ page: 1 }}>
 					<ArrowLeft className="text-foreground size-6" />
 				</Link>
 			</div>
@@ -35,9 +35,10 @@ function RouteComponent() {
 						title={journal.title}
 						content={journal.content}
 						journalDate={displayJournalDate(journal.journalDate)}
-						khusyuPercentage={`${journal.khusyuPercentage ?? 0}%`}
-						onTimePercentage={`${journal.punctualityPercentage ?? 0}%`}
+						khusyuPercentage={`${journal.khusyuPercentage ?? "-"}%`}
+						onTimePercentage={`${journal.punctualityPercentage ?? "-"}%`}
 						totalJournal={journal.attachedVerseCount}
+						link={`/journal/daily-journal/entry/${journal.id}`}
 					/>
 				))}
 				{entries.length === 0 && (

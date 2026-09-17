@@ -23,6 +23,7 @@ function RouteComponent() {
 			<header className="pt-14">
 				<Link
 					to="/journal/daily-journal"
+					search={{ page: 1 }}
 					className="inline-flex h-10 w-10 items-center justify-start"
 					aria-label="Kembali ke jurnal harian"
 				>

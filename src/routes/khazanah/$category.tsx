@@ -1,16 +1,57 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { KHAZANAH_CATEGORIES } from "#/lib/khazanah-data";
+import { getKhazanahCategory } from "#/lib/khazanah-data";
+
+interface KhazanahCategorySearch {
+	returnTo?: string;
+}
 
 export const Route = createFileRoute("/khazanah/$category")({
+	validateSearch: (
+		search: Record<string, unknown>,
+	): KhazanahCategorySearch => ({
+		returnTo:
+			typeof search.returnTo === "string" && search.returnTo.startsWith("/")
+				? search.returnTo
+				: undefined,
+	}),
 	component: KhazanahCategoryPage,
 });
 
 function KhazanahCategoryPage() {
 	const { category: categorySlug } = Route.useParams();
-	const category =
-		KHAZANAH_CATEGORIES.find((c) => c.slug === categorySlug) ??
-		KHAZANAH_CATEGORIES[1]; // default Pekerjaan
+	const { returnTo } = Route.useSearch();
+	const category = getKhazanahCategory(categorySlug);
+
+	if (!category) {
+		return (
+			<div className="mx-auto min-h-screen max-w-md bg-background px-4 pb-12 text-foreground">
+				<header className="pt-14">
+					<Link
+						to="/khazanah"
+						search={{ returnTo }}
+						className="inline-flex h-10 w-10 items-center justify-start"
+						aria-label="Kembali ke khazanah"
+					>
+						<ArrowLeft className="size-7" strokeWidth={2.75} />
+					</Link>
+				</header>
+				<main className="mt-8 rounded-3xl bg-[#062642] p-6">
+					<h1 className="font-bold text-2xl">Kategori tidak ditemukan</h1>
+					<p className="mt-2 text-muted-foreground text-sm">
+						Pilih kategori Khazanah yang tersedia.
+					</p>
+					<Link
+						to="/khazanah"
+						search={{ returnTo }}
+						className="mt-5 inline-flex rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground text-sm"
+					>
+						Lihat Khazanah
+					</Link>
+				</main>
+			</div>
+		);
+	}
 
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background px-4 pb-12 text-foreground">
@@ -18,6 +59,7 @@ function KhazanahCategoryPage() {
 			<header className="pt-14">
 				<Link
 					to="/khazanah"
+					search={{ returnTo }}
 					className="inline-flex h-10 w-10 items-center justify-start"
 					aria-label="Kembali ke khazanah"
 				>
@@ -39,12 +81,13 @@ function KhazanahCategoryPage() {
 							key={verse.id}
 							to="/khazanah/verse/$id"
 							params={{ id: verse.id }}
+							search={{ returnTo }}
 							className="flex flex-col items-center gap-4 rounded-3xl bg-[#062642] p-6 text-center transition-all hover:bg-[#082f52] active:scale-[0.99]"
 						>
 							{/* Arabic Text */}
 							<p
 								dir="rtl"
-								className="w-full text-center font-['Amiri',serif] text-xl text-[#32d7c4] leading-loose"
+								className="w-full text-center font-serif text-xl text-[#32d7c4] leading-loose"
 							>
 								{verse.arabic}
 							</p>

@@ -1,15 +1,64 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Plus } from "lucide-react";
 import { CategoryCard } from "#/components/journal/daily-journal/CategoryCard";
-import { getJournalCategoryCounts } from "#/lib/journal-server";
+import { JournalCard } from "#/components/journal/daily-journal/JournalCard";
+import {
+	getJournalCategoryCounts,
+	getJournalLibraryData,
+} from "#/lib/journal-server";
+
+interface JournalIndexSearch {
+	page: number;
+	query?: string;
+	themeId?: string;
+	fromDate?: string;
+	toDate?: string;
+	sort?: "newest" | "oldest";
+}
 
 export const Route = createFileRoute("/journal/daily-journal/")({
-	loader: async () => await getJournalCategoryCounts(),
+	validateSearch: (search: Record<string, unknown>): JournalIndexSearch => {
+		const parsed: JournalIndexSearch = {
+			page:
+				typeof search.page === "string"
+					? Math.max(1, Number(search.page) || 1)
+					: 1,
+		};
+		if (typeof search.query === "string") parsed.query = search.query;
+		if (typeof search.themeId === "string") parsed.themeId = search.themeId;
+		if (typeof search.fromDate === "string") parsed.fromDate = search.fromDate;
+		if (typeof search.toDate === "string") parsed.toDate = search.toDate;
+		if (search.sort === "oldest") parsed.sort = "oldest";
+		return parsed;
+	},
+	loaderDeps: ({ search }) => ({
+		page: search.page,
+		query: search.query,
+		themeId: search.themeId,
+		fromDate: search.fromDate,
+		toDate: search.toDate,
+		sort: search.sort,
+	}),
+	loader: async ({ deps }) =>
+		Promise.all([
+			getJournalCategoryCounts(),
+			getJournalLibraryData({
+				data: {
+					page: deps.page,
+					query: deps.query,
+					themeId: deps.themeId,
+					fromDate: deps.fromDate,
+					toDate: deps.toDate,
+					sort: deps.sort,
+				},
+			}),
+		]),
 	component: RouteComponent,
 });
 
 function RouteComponent() {
-	const categories = Route.useLoaderData();
+	const [categories, library] = Route.useLoaderData();
+	const navigate = Route.useNavigate();
 
 	return (
 		<div className="relative mx-auto min-h-screen max-w-md bg-background pb-24">
@@ -33,6 +82,54 @@ function RouteComponent() {
 						link={`/journal/daily-journal/theme/${category.id}`}
 					/>
 				))}
+			</div>
+			<div className="mt-8">
+				{library.entries.map((journal) => (
+					<JournalCard
+						key={journal.id}
+						title={journal.title}
+						content={journal.content}
+						journalDate={journal.journalDate}
+						khusyuPercentage={`${journal.khusyuPercentage ?? "-"}%`}
+						onTimePercentage={`${journal.punctualityPercentage ?? "-"}%`}
+						totalJournal={journal.attachedVerseCount}
+						link={`/journal/daily-journal/entry/${journal.id}`}
+					/>
+				))}
+				{(library.page > 1 || library.hasNextPage) && (
+					<div className="mt-4 flex justify-between px-4">
+						<button
+							type="button"
+							disabled={library.page <= 1}
+							onClick={() =>
+								void navigate({
+									search: (previous) => ({
+										...previous,
+										page: library.page - 1,
+									}),
+								})
+							}
+							className="rounded-xl border border-border px-3 py-2 text-sm disabled:opacity-40"
+						>
+							Sebelumnya
+						</button>
+						<button
+							type="button"
+							disabled={!library.hasNextPage}
+							onClick={() =>
+								void navigate({
+									search: (previous) => ({
+										...previous,
+										page: library.page + 1,
+									}),
+								})
+							}
+							className="rounded-xl border border-border px-3 py-2 text-sm disabled:opacity-40"
+						>
+							Berikutnya
+						</button>
+					</div>
+				)}
 			</div>
 
 			<Link

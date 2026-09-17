@@ -1,19 +1,29 @@
+import { randomUUID } from "node:crypto";
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { pool } from "./db";
+import { setPrivateCacheControl } from "./cache";
 import {
 	calculateDailyPrayerSchedule,
 	type DailyPrayerSchedule,
 	getPrayerWindowDetails,
-	PRAYER_NAMES,
 	type PrayerName,
 } from "./prayer-calculation";
-
+import { getCalculationMethodValues } from "./prayer-method-server";
+import { db } from "./prisma";
+import { unauthorizedError, validationError } from "./server-errors";
+import {
+	parseIsoDate,
+	parseLocationSource,
+	parsePrayerName,
+	parseTimezone,
+} from "./server-validation";
 import { getCurrentSession } from "./session";
 import {
 	formatLocalDate,
 	getTimezoneAbbreviation,
 	getTimezoneOffsetHours,
+	serializeInstant,
+	toTemporalInstant,
 } from "./timezone";
 
 export interface PrayerLogStatus {
@@ -32,6 +42,7 @@ export interface PrayerTrackerData {
 	logs: Record<PrayerName, PrayerLogStatus>;
 	completedCount: number;
 	totalPrayers: number;
+	hapticsEnabled: boolean;
 	userPreference: {
 		cityId: string | null;
 		cityName: string;
@@ -63,9 +74,13 @@ const DEFAULT_JAKARTA_PREF = {
  * user location preferences, detected timezone sync, and today's prayer logs.
  */
 export const getPrayerTrackerData = createServerFn({ method: "GET" })
-	.validator(
-		(input: { clientLocalDate?: string; clientTimezone?: string }) => input,
-	)
+	.validator((input: { clientLocalDate?: string; clientTimezone?: string }) => {
+		if (input.clientLocalDate)
+			parseIsoDate(input.clientLocalDate, "clientLocalDate");
+		if (input.clientTimezone)
+			parseTimezone(input.clientTimezone, "clientTimezone");
+		return input;
+	})
 	.handler(async ({ data }): Promise<PrayerTrackerData> => {
 		const session = await getCurrentSession();
 		if (!session?.user) {
@@ -76,58 +91,34 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
 				},
 			});
 		}
+		setPrivateCacheControl();
 
 		const userId = session.user.id;
 		const clientTz = data?.clientTimezone?.trim() || "Asia/Jakarta";
 
 		// 1. Fetch user location preference
-		const prefResult = await pool.query(
-			`SELECT * FROM "userLocationPreference" WHERE "userId" = $1`,
-			[userId],
-		);
-
-		let pref = prefResult.rows[0];
+		let pref = await db.orm.public.UserLocationPreference.where({
+			userId,
+		}).first();
 
 		if (!pref) {
 			// Bootstrap default preference if missing
-			const insertRes = await pool.query(
-				`INSERT INTO "userLocationPreference" (
-					id, "userId", "cityId", "cityName", province, country,
-					latitude, longitude, timezone, "timezoneOffset",
-					"calculationMethodId", source, "createdAt", "updatedAt"
-				) VALUES (
-					gen_random_uuid()::text, $1, $2, $3, $4, $5,
-					$6, $7, $8, $9, $10, $11, now(), now()
-				)
-				ON CONFLICT ("userId") DO UPDATE SET "updatedAt" = now()
-				RETURNING *`,
-				[
-					userId,
-					DEFAULT_JAKARTA_PREF.cityId,
-					DEFAULT_JAKARTA_PREF.cityName,
-					DEFAULT_JAKARTA_PREF.province,
-					DEFAULT_JAKARTA_PREF.country,
-					DEFAULT_JAKARTA_PREF.latitude,
-					DEFAULT_JAKARTA_PREF.longitude,
-					DEFAULT_JAKARTA_PREF.timezone,
-					DEFAULT_JAKARTA_PREF.timezoneOffset,
-					DEFAULT_JAKARTA_PREF.calculationMethodId,
-					DEFAULT_JAKARTA_PREF.source,
-				],
-			);
-			pref = insertRes.rows[0] ?? DEFAULT_JAKARTA_PREF;
+			pref = await db.orm.public.UserLocationPreference.where({
+				userId,
+			}).upsert({
+				create: { id: randomUUID(), userId, ...DEFAULT_JAKARTA_PREF },
+				update: {},
+			});
 		}
 
 		// 2. Real-time timezone auto-sync:
 		// If user source is 'auto' and detected timezone differs, update preference.
 		if (pref.source === "auto" && clientTz && pref.timezone !== clientTz) {
 			const newOffset = getTimezoneOffsetHours(new Date(), clientTz);
-			await pool.query(
-				`UPDATE "userLocationPreference"
-				 SET timezone = $1, "timezoneOffset" = $2, "updatedAt" = now()
-				 WHERE "userId" = $3`,
-				[clientTz, newOffset, userId],
-			);
+			await db.orm.public.UserLocationPreference.where({ userId }).update({
+				timezone: clientTz,
+				timezoneOffset: newOffset,
+			});
 			pref.timezone = clientTz;
 			pref.timezoneOffset = newOffset;
 		}
@@ -148,44 +139,15 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
 			timezoneOffset: activeOffset,
 			timezone: activeTimezone,
 			calculationMethodId: pref.calculationMethodId ?? "kemenag",
+			methodValues: await getCalculationMethodValues(
+				pref.calculationMethodId ?? "kemenag",
+			),
 		});
 
-		// 4. Optionally cache schedules into prayerSchedule
-		const locationKey = pref.cityId || `${pref.latitude},${pref.longitude}`;
-		try {
-			for (const item of schedule.items) {
-				await pool.query(
-					`INSERT INTO "prayerSchedule" (
-						id, "locationKey", "prayerDate", "prayerName",
-						"scheduledAt", timezone, "calculationMethodId",
-						"createdAt", "updatedAt"
-					) VALUES (
-						gen_random_uuid()::text, $1, $2, $3, $4, $5, $6, now(), now()
-					)
-					ON CONFLICT ("locationKey", "prayerDate", "prayerName", "calculationMethodId")
-					DO NOTHING`,
-					[
-						locationKey,
-						prayerDate,
-						item.id,
-						item.scheduledAt,
-						activeTimezone,
-						pref.calculationMethodId ?? "kemenag",
-					],
-				);
-			}
-		} catch (err) {
-			// Non-blocking cache write
-			console.error("Failed to cache prayerSchedule:", err);
-		}
-
-		// 5. Fetch prayer logs for this user on this date
-		const logsResult = await pool.query(
-			`SELECT "prayerName", "completedAt", status
-			 FROM "prayerLog"
-			 WHERE "userId" = $1 AND "prayerDate" = $2`,
-			[userId, prayerDate],
-		);
+		// Fetch prayer logs for this user on this date.
+		const logRows = await db.orm.public.PrayerLog.where({ userId, prayerDate })
+			.select("prayerName", "completedAt", "status")
+			.all();
 
 		const logs: Record<PrayerName, PrayerLogStatus> = {
 			subuh: { completed: false, completedAt: null, status: "pending" },
@@ -196,28 +158,27 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
 		};
 
 		let completedCount = 0;
-		for (const row of logsResult.rows) {
+		for (const row of logRows) {
 			const name = row.prayerName as PrayerName;
 			if (logs[name]) {
 				const isCompleted = row.status === "completed";
 				logs[name] = {
 					completed: isCompleted,
-					completedAt: row.completedAt
-						? new Date(row.completedAt).toISOString()
-						: null,
+					completedAt: serializeInstant(row.completedAt),
 					status: row.status,
 				};
 				if (isCompleted) completedCount++;
 			}
 		}
 
-		const totalCountRes = await pool.query(
-			`SELECT COUNT(*) as count
-			 FROM "prayerLog"
-			 WHERE "userId" = $1 AND status = 'completed'`,
-			[userId],
-		);
-		const totalPrayers = parseInt(totalCountRes.rows[0]?.count ?? "0", 10);
+		const totalPrayersResult = await db.orm.public.PrayerLog.where({
+			userId,
+			status: "completed",
+		}).aggregate((aggregate) => ({ total: aggregate.count() }));
+		const totalPrayers = totalPrayersResult.total;
+		const userPreference = await db.orm.public.UserPreference.where({ userId })
+			.select("vibrateOnPray")
+			.first();
 
 		return {
 			prayerDate,
@@ -232,6 +193,7 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
 			logs,
 			completedCount,
 			totalPrayers,
+			hapticsEnabled: userPreference?.vibrateOnPray ?? true,
 			userPreference: {
 				cityId: pref.cityId,
 				cityName: pref.cityName,
@@ -250,40 +212,32 @@ export const getPrayerTrackerData = createServerFn({ method: "GET" })
  * Server function to complete a prayer log via Swipe to Pray.
  */
 export const completePrayerAction = createServerFn({ method: "POST" })
-	.validator(
-		(input: { prayerName: string; prayerDate: string; completedAt?: string }) =>
-			input,
-	)
+	.validator((input: { prayerName: string; prayerDate: string }) => input)
 	.handler(async ({ data }) => {
 		const session = await getCurrentSession();
-		if (!session?.user) {
-			throw new Error("Unauthorized");
-		}
+		if (!session?.user) throw unauthorizedError();
+		setPrivateCacheControl();
 
 		const userId = session.user.id;
-		const normalizedPrayerName = data.prayerName.toLowerCase().trim();
+		const normalizedPrayerName = parsePrayerName(data.prayerName);
+		const prayerDate = parseIsoDate(data.prayerDate, "prayerDate");
 
-		if (!PRAYER_NAMES.includes(normalizedPrayerName as PrayerName)) {
-			throw new Error(`Invalid prayer name: ${data.prayerName}`);
-		}
-
-		const completedTimestamp = data.completedAt
-			? new Date(data.completedAt)
-			: new Date();
+		const completedTimestamp = new Date();
 
 		// Validate prayer window against user location preference and schedule
-		const prefResult = await pool.query(
-			`SELECT * FROM "userLocationPreference" WHERE "userId" = $1`,
-			[userId],
-		);
-		const pref = prefResult.rows[0] ?? DEFAULT_JAKARTA_PREF;
+		const pref =
+			(await db.orm.public.UserLocationPreference.where({ userId }).first()) ??
+			DEFAULT_JAKARTA_PREF;
 
-		const schedule = calculateDailyPrayerSchedule(data.prayerDate, {
+		const schedule = calculateDailyPrayerSchedule(prayerDate, {
 			latitude: pref.latitude ?? -6.2088,
 			longitude: pref.longitude ?? 106.8456,
 			timezoneOffset: pref.timezoneOffset ?? 7,
 			timezone: pref.timezone ?? "Asia/Jakarta",
 			calculationMethodId: pref.calculationMethodId ?? "kemenag",
+			methodValues: await getCalculationMethodValues(
+				pref.calculationMethodId ?? "kemenag",
+			),
 		});
 
 		const windowDetails = getPrayerWindowDetails(
@@ -296,36 +250,55 @@ export const completePrayerAction = createServerFn({ method: "POST" })
 		);
 
 		if (!currentDetail?.canTrack) {
-			throw new Error(
+			throw validationError(
 				currentDetail?.message ??
 					`Waktu solat ${data.prayerName} tidak dapat dicatat saat ini.`,
 			);
 		}
 
 		// Idempotent UPSERT into prayerLog
-		await pool.query(
-			`INSERT INTO "prayerLog" (
-				id, "userId", "prayerDate", "prayerName", "completedAt", status, "createdAt", "updatedAt"
-			) VALUES (
-				gen_random_uuid()::text, $1, $2, $3, $4, 'completed', now(), now()
-			)
-			ON CONFLICT ("userId", "prayerDate", "prayerName")
-			DO UPDATE SET
-				status = 'completed',
-				"completedAt" = EXCLUDED."completedAt",
-				"updatedAt" = now()`,
-			[userId, data.prayerDate, normalizedPrayerName, completedTimestamp],
-		);
+		const completedInstant = toTemporalInstant(completedTimestamp);
+		const existingLog = await db.orm.public.PrayerLog.where({
+			userId,
+			prayerDate,
+			prayerName: normalizedPrayerName,
+		}).first();
+		if (!existingLog?.status || existingLog.status !== "completed") {
+			await db.orm.public.PrayerLog.where({
+				userId,
+				prayerDate,
+				prayerName: normalizedPrayerName,
+			}).upsert({
+				create: {
+					id: randomUUID(),
+					userId,
+					prayerDate,
+					prayerName: normalizedPrayerName,
+					scheduledAt: toTemporalInstant(
+						schedule.items.find((item) => item.id === normalizedPrayerName)
+							?.scheduledAt,
+					),
+					completedAt: completedInstant,
+					status: "completed",
+				},
+				update: {
+					status: "completed",
+					completedAt: completedInstant,
+					scheduledAt: toTemporalInstant(
+						schedule.items.find((item) => item.id === normalizedPrayerName)
+							?.scheduledAt,
+					),
+				},
+			});
+		}
 
 		// Calculate updated completed count
-		const countResult = await pool.query(
-			`SELECT COUNT(*) as count
-			 FROM "prayerLog"
-			 WHERE "userId" = $1 AND "prayerDate" = $2 AND status = 'completed'`,
-			[userId, data.prayerDate],
-		);
-
-		const completedCount = parseInt(countResult.rows[0]?.count ?? "0", 10);
+		const completedCountResult = await db.orm.public.PrayerLog.where({
+			userId,
+			prayerDate,
+			status: "completed",
+		}).aggregate((aggregate) => ({ total: aggregate.count() }));
+		const completedCount = completedCountResult.total;
 
 		return {
 			success: true,
@@ -334,34 +307,80 @@ export const completePrayerAction = createServerFn({ method: "POST" })
 		};
 	});
 
+export const correctPrayerAction = createServerFn({ method: "POST" })
+	.validator(
+		(input: { prayerName: string; prayerDate: string; completed: boolean }) => {
+			if (typeof input.completed !== "boolean") {
+				throw validationError("completed is invalid.");
+			}
+			return input;
+		},
+	)
+	.handler(async ({ data }) => {
+		const session = await getCurrentSession();
+		if (!session?.user) throw unauthorizedError();
+		setPrivateCacheControl();
+		const userId = session.user.id;
+		const prayerName = parsePrayerName(data.prayerName);
+		const prayerDate = parseIsoDate(data.prayerDate, "prayerDate");
+		const scope = { userId, prayerDate, prayerName };
+		if (!data.completed) {
+			await db.orm.public.PrayerLog.where(scope).delete();
+			return { success: true, prayerName, completed: false };
+		}
+		await db.orm.public.PrayerLog.where(scope).upsert({
+			create: {
+				id: randomUUID(),
+				...scope,
+				completedAt: toTemporalInstant(new Date()),
+				status: "completed",
+			},
+			update: {
+				status: "completed",
+				completedAt: toTemporalInstant(new Date()),
+			},
+		});
+		return { success: true, prayerName, completed: true };
+	});
+
 /**
  * Server function to sync user timezone preference.
  */
 export const syncTimezonePreference = createServerFn({ method: "POST" })
 	.validator(
-		(input: { timezone: string; timezoneOffset?: number; source?: string }) =>
-			input,
+		(input: { timezone: string; timezoneOffset?: number; source?: string }) => {
+			parseTimezone(input.timezone);
+			if (
+				input.timezoneOffset !== undefined &&
+				(!Number.isInteger(input.timezoneOffset) ||
+					input.timezoneOffset < -14 ||
+					input.timezoneOffset > 14)
+			) {
+				throw validationError("timezoneOffset is invalid.");
+			}
+			return input;
+		},
 	)
 	.handler(async ({ data }) => {
 		const session = await getCurrentSession();
-		if (!session?.user) {
-			throw new Error("Unauthorized");
-		}
+		if (!session?.user) throw unauthorizedError();
+		setPrivateCacheControl();
 
 		const userId = session.user.id;
+		const timezone = parseTimezone(data.timezone);
+		const source = data.source ? parseLocationSource(data.source) : undefined;
 		const offset =
-			data.timezoneOffset ?? getTimezoneOffsetHours(new Date(), data.timezone);
+			data.timezoneOffset ?? getTimezoneOffsetHours(new Date(), timezone);
 
-		await pool.query(
-			`UPDATE "userLocationPreference"
-			 SET timezone = $1, "timezoneOffset" = $2, source = COALESCE($3, source), "updatedAt" = now()
-			 WHERE "userId" = $4`,
-			[data.timezone, offset, data.source ?? null, userId],
-		);
+		await db.orm.public.UserLocationPreference.where({ userId }).update({
+			timezone,
+			timezoneOffset: offset,
+			...(source ? { source } : {}),
+		});
 
 		return {
 			success: true,
-			timezone: data.timezone,
+			timezone,
 			timezoneOffset: offset,
 		};
 	});

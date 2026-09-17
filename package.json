@@ -24,7 +24,9 @@
     "db:schema": "dotenv -e .env -- pnpm exec prisma db schema",
     "db:seed": "dotenv -e .env -- tsx prisma/seed.ts",
     "prepare": "husky",
-    "contract:emit": "prisma contract emit"
+    "contract:emit": "prisma contract emit",
+    "release:headers": "node scripts/check-security-headers.mjs",
+    "release:verify": "pnpm check && pnpm test && pnpm db:verify && pnpm build"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -38,7 +40,7 @@
     "@tanstack/react-router-ssr-query": "latest",
     "@tanstack/react-start": "latest",
     "@tanstack/router-plugin": "^1.168.38",
-    "better-auth": "^1.7.4",
+    "better-auth": "^1.7.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",

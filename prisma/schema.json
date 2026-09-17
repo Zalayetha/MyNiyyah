@@ -2056,6 +2056,23 @@
               ]
             },
             "cityCatalog": {
+              "checks": [
+                {
+                  "expression": "(latitude IS NULL AND longitude IS NULL) OR (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180)",
+                  "name": "valid_city_coordinates_f8ed1647",
+                  "prefix": "valid_city_coordinates"
+                },
+                {
+                  "expression": "timezone ~ '^[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)+$'",
+                  "name": "valid_city_timezone_d08d6136",
+                  "prefix": "valid_city_timezone"
+                },
+                {
+                  "expression": "\"timezoneOffset\" BETWEEN -14 AND 14",
+                  "name": "valid_city_timezone_offset_810dd76e",
+                  "prefix": "valid_city_timezone_offset"
+                }
+              ],
               "columns": {
                 "country": {
                   "codecId": "pg/text@1",
@@ -2211,6 +2228,18 @@
               ]
             },
             "journalEntry": {
+              "checks": [
+                {
+                  "expression": "\"journalDate\" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
+                  "name": "valid_journal_date_58130547",
+                  "prefix": "valid_journal_date"
+                },
+                {
+                  "expression": "(\"khusyuPercentage\" IS NULL OR \"khusyuPercentage\" BETWEEN 0 AND 100) AND (\"punctualityPercentage\" IS NULL OR \"punctualityPercentage\" BETWEEN 0 AND 100)",
+                  "name": "valid_journal_percentages_243c97b5",
+                  "prefix": "valid_journal_percentages"
+                }
+              ],
               "columns": {
                 "content": {
                   "codecId": "pg/text@1",
@@ -2302,6 +2331,23 @@
               ]
             },
             "journalPrayerReflection": {
+              "checks": [
+                {
+                  "expression": "\"prayerName\" IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
+                  "name": "valid_reflection_prayer_name_a74aac75",
+                  "prefix": "valid_reflection_prayer_name"
+                },
+                {
+                  "expression": "punctuality IS NULL OR punctuality IN ('Belum Dicatat', 'Awal Waktu', 'Tepat Waktu', 'Terlambat')",
+                  "name": "valid_reflection_punctuality_2d073994",
+                  "prefix": "valid_reflection_punctuality"
+                },
+                {
+                  "expression": "(\"feelingScore\" IS NULL OR \"feelingScore\" BETWEEN 1 AND 4) AND (\"khusyuScore\" IS NULL OR \"khusyuScore\" BETWEEN 1 AND 4)",
+                  "name": "valid_reflection_scores_2c22ff97",
+                  "prefix": "valid_reflection_scores"
+                }
+              ],
               "columns": {
                 "adzanAt": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -2615,6 +2661,13 @@
               "uniques": []
             },
             "khazanahVerseSegment": {
+              "checks": [
+                {
+                  "expression": "position >= 0",
+                  "name": "valid_verse_segment_position_c03c2ccb",
+                  "prefix": "valid_verse_segment_position"
+                }
+              ],
               "columns": {
                 "createdAt": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -2677,6 +2730,18 @@
               ]
             },
             "prayerCalculationMethod": {
+              "checks": [
+                {
+                  "expression": "(\"fajrAngle\" IS NULL OR \"fajrAngle\" BETWEEN 0 AND 90) AND (\"ishaAngle\" IS NULL OR \"ishaAngle\" BETWEEN 0 AND 90)",
+                  "name": "valid_calculation_angles_ced22076",
+                  "prefix": "valid_calculation_angles"
+                },
+                {
+                  "expression": "\"ishaIntervalMinutes\" IS NULL OR \"ishaIntervalMinutes\" BETWEEN 0 AND 1440",
+                  "name": "valid_isha_interval_1d826c4a",
+                  "prefix": "valid_isha_interval"
+                }
+              ],
               "columns": {
                 "createdAt": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -2733,6 +2798,28 @@
               "uniques": []
             },
             "prayerLog": {
+              "checks": [
+                {
+                  "expression": "\"prayerDate\" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
+                  "name": "valid_prayer_log_date_a1c36d83",
+                  "prefix": "valid_prayer_log_date"
+                },
+                {
+                  "expression": "\"prayerName\" IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
+                  "name": "valid_prayer_log_name_a74aac75",
+                  "prefix": "valid_prayer_log_name"
+                },
+                {
+                  "expression": "(\"feelingScore\" IS NULL OR \"feelingScore\" BETWEEN 1 AND 4) AND (\"khusyuScore\" IS NULL OR \"khusyuScore\" BETWEEN 1 AND 4)",
+                  "name": "valid_prayer_log_scores_2c22ff97",
+                  "prefix": "valid_prayer_log_scores"
+                },
+                {
+                  "expression": "status IN ('pending', 'completed')",
+                  "name": "valid_prayer_log_status_23d18405",
+                  "prefix": "valid_prayer_log_status"
+                }
+              ],
               "columns": {
                 "completedAt": {
                   "codecId": "pg/timestamptz-temporal@1",
@@ -2845,6 +2932,23 @@
               ]
             },
             "prayerSchedule": {
+              "checks": [
+                {
+                  "expression": "\"prayerDate\" ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'",
+                  "name": "valid_schedule_date_a1c36d83",
+                  "prefix": "valid_schedule_date"
+                },
+                {
+                  "expression": "\"prayerName\" IN ('subuh', 'zhuhur', 'ashar', 'maghrib', 'isya')",
+                  "name": "valid_schedule_prayer_name_a74aac75",
+                  "prefix": "valid_schedule_prayer_name"
+                },
+                {
+                  "expression": "timezone ~ '^[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)+$'",
+                  "name": "valid_schedule_timezone_d08d6136",
+                  "prefix": "valid_schedule_timezone"
+                }
+              ],
               "columns": {
                 "calculationMethodId": {
                   "codecId": "pg/text@1",
@@ -3064,6 +3168,28 @@
               ]
             },
             "userLocationPreference": {
+              "checks": [
+                {
+                  "expression": "(latitude IS NULL AND longitude IS NULL) OR (latitude BETWEEN -90 AND 90 AND longitude BETWEEN -180 AND 180)",
+                  "name": "valid_location_coordinates_f8ed1647",
+                  "prefix": "valid_location_coordinates"
+                },
+                {
+                  "expression": "source IN ('manual', 'auto')",
+                  "name": "valid_location_source_8fa376db",
+                  "prefix": "valid_location_source"
+                },
+                {
+                  "expression": "timezone ~ '^[A-Za-z0-9_+.-]+(/[A-Za-z0-9_+.-]+)+$'",
+                  "name": "valid_location_timezone_d08d6136",
+                  "prefix": "valid_location_timezone"
+                },
+                {
+                  "expression": "\"timezoneOffset\" BETWEEN -14 AND 14",
+                  "name": "valid_location_timezone_offset_810dd76e",
+                  "prefix": "valid_location_timezone_offset"
+                }
+              ],
               "columns": {
                 "calculationMethodId": {
                   "codecId": "pg/text@1",
@@ -3382,7 +3508,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "5251d4f502fc462517c068e7b6f9032eca2837f1ec81765060fbde0dcb358502"
+    "storageHash": "c92c3e919c78db676732fad4e76d2bcb5a25a81594817ed5585131189098a6a8"
   },
   "execution": {
     "executionHash": "35c0538f2b41bb8a6ebedec5e78beb47bcd9c9edc460c83a817f2eadc1d88a71",

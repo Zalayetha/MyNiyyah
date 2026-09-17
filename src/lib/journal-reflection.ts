@@ -4,16 +4,27 @@ import type {
 	PrayerTimeItem,
 } from "./prayer-calculation";
 import { PRAYER_NAMES } from "./prayer-calculation";
-import { formatLocalDate, formatLocalTime } from "./timezone";
+import {
+	calculateKhusyuAverage,
+	calculateOnTimeRate,
+	isValidLocalDate,
+} from "./statistics";
+import {
+	formatLocalDate,
+	formatLocalTime,
+	type InstantInput,
+	normalizeInstantDate,
+} from "./timezone";
 
-export const JOURNAL_DRAFT_STORAGE_KEY = "myniyyah_journal_draft";
+export const JOURNAL_DRAFT_STORAGE_KEY = "myniyyah_journal_draft_v2";
+export const JOURNAL_DRAFT_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type FeelingLabel = "Ngantuk" | "Berat" | "Tenang" | "Khusyu'";
 export type PunctualityLabel =
 	| "Awal Waktu"
 	| "Tepat Waktu"
 	| "Terlambat"
-	| "Tidak Ditunaikan";
+	| "Belum Dicatat";
 
 export const FEELING_OPTIONS: {
 	label: FeelingLabel;
@@ -47,6 +58,7 @@ export interface PrayerMetric {
 	punctuality: PunctualityLabel;
 	scheduledAt: string | null;
 	completedAtIso: string | null;
+	onTimeWindowEndAt: string | null;
 	prayerLogId: string | null;
 	feelingIndex: number | null;
 	feelingLabel: FeelingLabel | null;
@@ -70,23 +82,34 @@ export interface JournalDraftAttachedVerse {
 }
 
 export interface JournalDraft {
+	version: 2;
+	updatedAt: string;
 	journalDate: string;
 	themeId: string | null;
 	title: string;
 	content: string;
 	feelings: Partial<Record<PrayerName, JournalDraftFeeling>>;
 	attachedVerses: JournalDraftAttachedVerse[];
+	expectedUpdatedAt?: string | null;
 }
 
 export interface JournalSummary {
 	khusyuPercentage: number;
 	punctualityPercentage: number;
+	khusyuSampleSize: number;
+	punctualitySampleSize: number;
 }
 
-function normalizeDate(value: string | Date | null | undefined): Date | null {
-	if (!value) return null;
-	const date = value instanceof Date ? value : new Date(value);
-	return Number.isNaN(date.getTime()) ? null : date;
+export type JournalEligibilityReason =
+	| "eligible"
+	| "invalid-date"
+	| "future-date"
+	| "day-in-progress";
+
+export interface JournalEligibility {
+	canCreate: boolean;
+	canEdit: boolean;
+	reason: JournalEligibilityReason;
 }
 
 function getFeelingByScore(score: number | null | undefined) {
@@ -110,9 +133,10 @@ export function getJournalDraftFeeling(
 export function calculatePunctuality(
 	completedAt: Date | null,
 	scheduledAt: Date | null,
+	onTimeWindowEndAt: Date | null = null,
 ): { differenceMinutes: number | null; punctuality: PunctualityLabel } {
 	if (!completedAt || !scheduledAt) {
-		return { differenceMinutes: null, punctuality: "Tidak Ditunaikan" };
+		return { differenceMinutes: null, punctuality: "Belum Dicatat" };
 	}
 
 	const differenceMinutes = Math.round(
@@ -122,7 +146,11 @@ export function calculatePunctuality(
 	if (differenceMinutes <= 30) {
 		return { differenceMinutes, punctuality: "Awal Waktu" };
 	}
-	if (differenceMinutes <= 60) {
+	if (
+		(onTimeWindowEndAt &&
+			completedAt.getTime() < onTimeWindowEndAt.getTime()) ||
+		(!onTimeWindowEndAt && differenceMinutes <= 60)
+	) {
 		return { differenceMinutes, punctuality: "Tepat Waktu" };
 	}
 	return { differenceMinutes, punctuality: "Terlambat" };
@@ -133,14 +161,16 @@ export function calculatePrayerMetrics(
 	log?: JournalPrayerLog | null,
 	timezone = "Asia/Jakarta",
 	timezoneAbbreviation = "WIB",
+	onTimeWindowEndAt: Date | null = null,
 ): PrayerMetric {
 	const scheduledAt =
-		normalizeDate(log?.scheduledAt) ?? scheduleItem.scheduledAt;
+		normalizeInstantDate(log?.scheduledAt) ?? scheduleItem.scheduledAt;
 	const completedAt =
-		log?.status === "completed" ? normalizeDate(log.completedAt) : null;
+		log?.status === "completed" ? normalizeInstantDate(log.completedAt) : null;
 	const { differenceMinutes, punctuality } = calculatePunctuality(
 		completedAt,
 		scheduledAt,
+		onTimeWindowEndAt,
 	);
 	const feeling = getFeelingByScore(log?.feelingScore ?? log?.khusyuScore);
 
@@ -149,12 +179,13 @@ export function calculatePrayerMetrics(
 		adzanAt: `${formatLocalTime(scheduledAt, timezone, ".")} ${timezoneAbbreviation}`,
 		completedAt: completedAt
 			? `${formatLocalTime(completedAt, timezone, ".")} ${timezoneAbbreviation}`
-			: "Belum ditunaikan",
+			: "Belum dicatat",
 		difference: differenceMinutes === null ? "-" : `${differenceMinutes} menit`,
 		differenceMinutes,
 		punctuality,
 		scheduledAt: scheduledAt.toISOString(),
 		completedAtIso: completedAt?.toISOString() ?? null,
+		onTimeWindowEndAt: onTimeWindowEndAt?.toISOString() ?? null,
 		prayerLogId: log?.id ?? null,
 		feelingIndex: feeling ? feeling.score - 1 : null,
 		feelingLabel: feeling?.label ?? null,
@@ -171,13 +202,18 @@ export function calculateDailyPrayerMetrics(
 ): Record<PrayerName, PrayerMetric> {
 	const logsByPrayer = new Map(logs.map((log) => [log.prayerName, log]));
 	return Object.fromEntries(
-		schedule.items.map((item) => [
+		schedule.items.map((item, index) => [
 			item.id,
 			calculatePrayerMetrics(
 				item,
 				logsByPrayer.get(item.id),
 				timezone,
 				timezoneAbbreviation,
+				index < schedule.items.length - 1
+					? schedule.items[index + 1].scheduledAt
+					: new Date(
+							schedule.items[0].scheduledAt.getTime() + 24 * 60 * 60 * 1000,
+						),
 			),
 		]),
 	) as Record<PrayerName, PrayerMetric>;
@@ -186,32 +222,70 @@ export function calculateDailyPrayerMetrics(
 export function calculateJournalSummary(
 	feelings: Partial<Record<PrayerName, JournalDraftFeeling>>,
 	prayerMetrics: Partial<
-		Record<PrayerName, Pick<PrayerMetric, "differenceMinutes">>
+		Record<
+			PrayerName,
+			Pick<PrayerMetric, "scheduledAt" | "completedAtIso" | "onTimeWindowEndAt">
+		>
 	>,
 ): JournalSummary {
-	const totalFeelingScore = PRAYER_NAMES.reduce(
-		(total, prayerName) => total + (feelings[prayerName]?.score ?? 0),
-		0,
+	const khusyu = calculateKhusyuAverage(
+		PRAYER_NAMES.map((prayerName) => ({
+			score: feelings[prayerName]?.score ?? null,
+		})),
 	);
-	const onTimeCount = PRAYER_NAMES.filter((prayerName) => {
-		const diff = prayerMetrics[prayerName]?.differenceMinutes;
-		return typeof diff === "number" && diff <= 60;
-	}).length;
+	const punctuality = calculateOnTimeRate(
+		PRAYER_NAMES.map((prayerName) => ({
+			scheduledAt: prayerMetrics[prayerName]?.scheduledAt,
+			completedAt: prayerMetrics[prayerName]?.completedAtIso,
+			onTimeWindowEndAt: prayerMetrics[prayerName]?.onTimeWindowEndAt,
+		})),
+	);
 
 	return {
-		khusyuPercentage: Math.round(
-			(totalFeelingScore / (PRAYER_NAMES.length * 4)) * 100,
-		),
-		punctualityPercentage: Math.round(
-			(onTimeCount / PRAYER_NAMES.length) * 100,
-		),
+		khusyuPercentage: khusyu.percentage,
+		punctualityPercentage: punctuality.percentage,
+		khusyuSampleSize: khusyu.sampleSize,
+		punctualitySampleSize: punctuality.sampleSize,
 	};
+}
+
+export function getJournalEligibility({
+	journalDate,
+	todayDate,
+	isyaAt,
+	referenceDate = new Date(),
+	isExisting = false,
+}: {
+	journalDate: string;
+	todayDate: string;
+	isyaAt?: InstantInput;
+	referenceDate?: Date;
+	isExisting?: boolean;
+}): JournalEligibility {
+	if (!isValidLocalDate(journalDate) || !isValidLocalDate(todayDate)) {
+		return { canCreate: false, canEdit: false, reason: "invalid-date" };
+	}
+	if (journalDate > todayDate) {
+		return { canCreate: false, canEdit: false, reason: "future-date" };
+	}
+	if (isExisting) {
+		return { canCreate: false, canEdit: true, reason: "eligible" };
+	}
+	if (journalDate === todayDate) {
+		const isya = normalizeInstantDate(isyaAt);
+		if (!isya || referenceDate.getTime() < isya.getTime()) {
+			return { canCreate: false, canEdit: false, reason: "day-in-progress" };
+		}
+	}
+	return { canCreate: true, canEdit: false, reason: "eligible" };
 }
 
 export function createInitialJournalDraft(
 	date = formatLocalDate(new Date(), "Asia/Jakarta"),
 ): JournalDraft {
 	return {
+		version: 2,
+		updatedAt: new Date().toISOString(),
 		journalDate: date,
 		themeId: null,
 		title: "",
@@ -221,8 +295,47 @@ export function createInitialJournalDraft(
 	};
 }
 
+export function getJournalDraftStorageKey(scope: string, date: string) {
+	return `${JOURNAL_DRAFT_STORAGE_KEY}:${scope}:${date}`;
+}
+
+export function clearJournalDraftStorage(storage: Storage) {
+	for (let index = storage.length - 1; index >= 0; index -= 1) {
+		const key = storage.key(index);
+		if (key?.startsWith(JOURNAL_DRAFT_STORAGE_KEY)) storage.removeItem(key);
+	}
+}
+
+export function hasJournalDraftContent(draft: JournalDraft): boolean {
+	return Boolean(
+		draft.title.trim() ||
+			draft.content.trim() ||
+			draft.themeId ||
+			Object.keys(draft.feelings).length ||
+			draft.attachedVerses.length,
+	);
+}
+
+export function isJournalDraftDirty(
+	draft: JournalDraft,
+	baseline?: Pick<
+		JournalDraft,
+		"title" | "content" | "themeId" | "feelings" | "attachedVerses"
+	> | null,
+): boolean {
+	if (!baseline) return hasJournalDraftContent(draft);
+	return (
+		draft.title !== baseline.title ||
+		draft.content !== baseline.content ||
+		draft.themeId !== baseline.themeId ||
+		JSON.stringify(draft.feelings) !== JSON.stringify(baseline.feelings) ||
+		JSON.stringify(draft.attachedVerses) !==
+			JSON.stringify(baseline.attachedVerses)
+	);
+}
+
 export function serializeJournalDraft(draft: JournalDraft): string {
-	return JSON.stringify(draft);
+	return JSON.stringify({ ...draft, version: 2 });
 }
 
 export function parseJournalDraft(
@@ -232,17 +345,34 @@ export function parseJournalDraft(
 	if (!raw) return createInitialJournalDraft(fallbackDate);
 	try {
 		const parsed = JSON.parse(raw) as Partial<JournalDraft>;
+		if (parsed.version !== 2 || typeof parsed.updatedAt !== "string") {
+			return createInitialJournalDraft(fallbackDate);
+		}
+		const updatedAt = Date.parse(parsed.updatedAt);
+		if (
+			!Number.isFinite(updatedAt) ||
+			Date.now() - updatedAt > JOURNAL_DRAFT_MAX_AGE_MS
+		) {
+			return createInitialJournalDraft(fallbackDate);
+		}
 		return {
 			...createInitialJournalDraft(fallbackDate),
 			...parsed,
+			version: 2,
+			updatedAt: parsed.updatedAt,
 			journalDate:
 				typeof parsed.journalDate === "string" && parsed.journalDate
 					? parsed.journalDate
 					: (fallbackDate ?? createInitialJournalDraft().journalDate),
-			themeId: parsed.themeId ?? null,
-			title: parsed.title ?? "",
-			content: parsed.content ?? "",
-			feelings: parsed.feelings ?? {},
+			themeId: typeof parsed.themeId === "string" ? parsed.themeId : null,
+			title: typeof parsed.title === "string" ? parsed.title : "",
+			content: typeof parsed.content === "string" ? parsed.content : "",
+			feelings:
+				parsed.feelings &&
+				typeof parsed.feelings === "object" &&
+				!Array.isArray(parsed.feelings)
+					? parsed.feelings
+					: {},
 			attachedVerses: Array.isArray(parsed.attachedVerses)
 				? parsed.attachedVerses
 				: [],

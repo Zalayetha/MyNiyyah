@@ -2,19 +2,65 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
-import { KHAZANAH_VERSES } from "#/lib/khazanah-data";
+import {
+	getKhazanahSegmentId,
+	getKhazanahVerse,
+	getKhazanahVerseSegments,
+	KHAZANAH_SOURCE_METADATA,
+} from "#/lib/khazanah-data";
+
+interface VerseSearch {
+	returnTo?: string;
+}
 
 export const Route = createFileRoute("/khazanah/verse/$id")({
+	validateSearch: (search: Record<string, unknown>): VerseSearch => ({
+		returnTo:
+			typeof search.returnTo === "string" && search.returnTo.startsWith("/")
+				? search.returnTo
+				: undefined,
+	}),
 	component: VerseDetailPage,
 });
 
 function VerseDetailPage() {
 	const navigate = useNavigate();
 	const { id } = Route.useParams();
-	const verse = KHAZANAH_VERSES.find((v) => v.id === id) ?? KHAZANAH_VERSES[0];
+	const { returnTo } = Route.useSearch();
+	const verse = getKhazanahVerse(id);
 	const [selectedSegment, setSelectedSegment] = useState<number>(0);
 
-	const segments = verse.segments ?? [verse.translation];
+	if (!verse) {
+		return (
+			<div className="mx-auto min-h-screen max-w-md bg-background px-4 pb-12 text-foreground">
+				<header className="pt-14">
+					<Link
+						to="/khazanah"
+						search={{ returnTo }}
+						className="inline-flex h-10 w-10 items-center justify-start"
+						aria-label="Kembali ke khazanah"
+					>
+						<ArrowLeft className="size-7" strokeWidth={2.75} />
+					</Link>
+				</header>
+				<main className="mt-8 rounded-3xl bg-[#062642] p-6">
+					<h1 className="font-bold text-2xl">Ayat tidak ditemukan</h1>
+					<p className="mt-2 text-muted-foreground text-sm">
+						Pilih ayat Khazanah yang tersedia.
+					</p>
+					<Link
+						to="/khazanah"
+						search={{ returnTo }}
+						className="mt-5 inline-flex rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground text-sm"
+					>
+						Lihat Khazanah
+					</Link>
+				</main>
+			</div>
+		);
+	}
+
+	const segments = getKhazanahVerseSegments(verse);
 
 	return (
 		<div className="mx-auto min-h-screen max-w-md bg-background px-4 pb-8 text-foreground">
@@ -23,6 +69,7 @@ function VerseDetailPage() {
 				<Link
 					to="/khazanah/$category"
 					params={{ category: verse.category }}
+					search={{ returnTo }}
 					className="inline-flex h-10 w-10 items-center justify-start"
 					aria-label="Kembali"
 				>
@@ -68,9 +115,12 @@ function VerseDetailPage() {
 				{/* Arabic Text */}
 				<p
 					dir="rtl"
-					className="mt-8 w-full text-center font-['Amiri',serif] text-2xl text-[#32d7c4] leading-loose"
+					className="mt-8 w-full text-center font-serif text-2xl text-[#32d7c4] leading-loose"
 				>
 					{verse.arabic}
+				</p>
+				<p className="mt-3 text-muted-foreground text-xs">
+					Sumber: {KHAZANAH_SOURCE_METADATA.translationEdition}
 				</p>
 
 				{/* Translation Segments */}
@@ -106,7 +156,7 @@ function VerseDetailPage() {
 								params: { step: "journal-2-write" },
 								search: {
 									verseId: verse.id,
-									segmentIndex: selectedSegment,
+									segmentId: getKhazanahSegmentId(verse.id, selectedSegment),
 								},
 							});
 						}}

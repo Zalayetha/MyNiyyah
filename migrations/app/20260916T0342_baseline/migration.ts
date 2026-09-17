@@ -1,0 +1,678 @@
+#!/usr/bin/env -S node
+import type { Contract as End } from '../../snapshots/5251d4f502fc462517c068e7b6f9032eca2837f1ec81765060fbde0dcb358502/contract';
+import endContract from '../../snapshots/5251d4f502fc462517c068e7b6f9032eca2837f1ec81765060fbde0dcb358502/contract.json' with { type: 'json' };
+import { Migration, MigrationCLI, col, fn, lit, primaryKey } from '@prisma/orm-postgres/migration';
+
+export default class M extends Migration<never, End> {
+  override readonly endContractJson = endContract;
+
+  override get operations() {
+    return [
+      this.createSchema({ schema: 'public' }),
+      this.createTable({
+        schema: 'public',
+        table: 'account',
+        columns: [
+          col('accessToken', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('accessTokenExpiresAt', 'timestamptz', {
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('accountId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('idToken', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('password', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('providerId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('refreshToken', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('refreshTokenExpiresAt', 'timestamptz', {
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('scope', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'cityCatalog',
+        columns: [
+          col('country', 'text', {
+            notNull: true,
+            default: lit('Indonesia'),
+            codecRef: { codecId: 'pg/text@1' },
+          }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('latitude', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
+          col('longitude', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
+          col('name', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('province', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('timezone', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('timezoneOffset', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'journalAttachedVerse',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('journalEntryId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('quoteText', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('segmentId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('surahRef', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('verseId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'journalEntry',
+        columns: [
+          col('content', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('journalDate', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('khusyuPercentage', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+          col('punctualityPercentage', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+          col('themeId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('title', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'journalPrayerReflection',
+        columns: [
+          col('adzanAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-temporal@1' } }),
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-temporal@1' } }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('differenceMinutes', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+          col('feeling', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('feelingScore', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('journalEntryId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('khusyuScore', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+          col('prayerLogId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('prayerName', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('punctuality', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'journalTheme',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('slug', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('sortOrder', 'int4', {
+            notNull: true,
+            default: lit(0),
+            codecRef: { codecId: 'pg/int4@1' },
+          }),
+          col('title', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'khazanahCategory',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('slug', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('sortOrder', 'int4', {
+            notNull: true,
+            default: lit(0),
+            codecRef: { codecId: 'pg/int4@1' },
+          }),
+          col('subtitle', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('title', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'khazanahVerse',
+        columns: [
+          col('arabic', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('categoryId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('juz', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
+          col('reference', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('surahName', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('surahNumber', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
+          col('surahTranslation', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('title', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('translation', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('verseNumber', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'khazanahVerseSegment',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('position', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
+          col('text', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('verseId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'prayerCalculationMethod',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('description', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('fajrAngle', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('ishaAngle', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
+          col('ishaIntervalMinutes', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+          col('name', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'prayerLog',
+        columns: [
+          col('completedAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-temporal@1' } }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('feeling', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('feelingScore', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('khusyuScore', 'int4', { codecRef: { codecId: 'pg/int4@1' } }),
+          col('notes', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('prayerDate', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('prayerName', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('scheduledAt', 'timestamptz', { codecRef: { codecId: 'pg/timestamptz-temporal@1' } }),
+          col('status', 'text', {
+            notNull: true,
+            default: lit('pending'),
+            codecRef: { codecId: 'pg/text@1' },
+          }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'prayerSchedule',
+        columns: [
+          col('calculationMethodId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('locationKey', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('prayerDate', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('prayerName', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('scheduledAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('timezone', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'session',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('expiresAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('ipAddress', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('token', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('userAgent', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'user',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('email', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('emailVerified', 'bool', {
+            notNull: true,
+            default: lit(false),
+            codecRef: { codecId: 'pg/bool@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('image', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('name', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'userLocationPreference',
+        columns: [
+          col('calculationMethodId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('cityId', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('cityName', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('country', 'text', {
+            notNull: true,
+            default: lit('Indonesia'),
+            codecRef: { codecId: 'pg/text@1' },
+          }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('latitude', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
+          col('longitude', 'float8', { codecRef: { codecId: 'pg/float8@1' } }),
+          col('province', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('source', 'text', {
+            notNull: true,
+            default: lit('manual'),
+            codecRef: { codecId: 'pg/text@1' },
+          }),
+          col('timezone', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('timezoneOffset', 'int4', { notNull: true, codecRef: { codecId: 'pg/int4@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'userPreference',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('journalReminderTime', 'text', {
+            notNull: true,
+            default: lit('20:00'),
+            codecRef: { codecId: 'pg/text@1' },
+          }),
+          col('notifyJournal', 'bool', {
+            notNull: true,
+            default: lit(true),
+            codecRef: { codecId: 'pg/bool@1' },
+          }),
+          col('notifyPrayer', 'bool', {
+            notNull: true,
+            default: lit(true),
+            codecRef: { codecId: 'pg/bool@1' },
+          }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('vibrateOnPray', 'bool', {
+            notNull: true,
+            default: lit(true),
+            codecRef: { codecId: 'pg/bool@1' },
+          }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'userProfile',
+        columns: [
+          col('avatarUrl', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('bio', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('cityName', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('country', 'text', {
+            notNull: true,
+            default: lit('Indonesia'),
+            codecRef: { codecId: 'pg/text@1' },
+          }),
+          col('createdAt', 'timestamptz', {
+            notNull: true,
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('phone', 'text', { codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('userId', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.createTable({
+        schema: 'public',
+        table: 'verification',
+        columns: [
+          col('createdAt', 'timestamptz', {
+            default: fn('now()'),
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('expiresAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('id', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('identifier', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+          col('updatedAt', 'timestamptz', {
+            notNull: true,
+            codecRef: { codecId: 'pg/timestamptz-temporal@1' },
+          }),
+          col('value', 'text', { notNull: true, codecRef: { codecId: 'pg/text@1' } }),
+        ],
+        constraints: [primaryKey(['id'])],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'account',
+        constraint: 'account_providerId_accountId_key',
+        columns: ['providerId', 'accountId'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'journalAttachedVerse',
+        constraint: 'journalAttachedVerse_journalEntryId_verseId_segmentId_key',
+        columns: ['journalEntryId', 'verseId', 'segmentId'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'journalEntry',
+        constraint: 'journalEntry_userId_journalDate_key',
+        columns: ['userId', 'journalDate'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'journalPrayerReflection',
+        constraint: 'journalPrayerReflection_journalEntryId_prayerName_key',
+        columns: ['journalEntryId', 'prayerName'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'journalTheme',
+        constraint: 'journalTheme_slug_key',
+        columns: ['slug'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'khazanahCategory',
+        constraint: 'khazanahCategory_slug_key',
+        columns: ['slug'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'khazanahVerseSegment',
+        constraint: 'khazanahVerseSegment_verseId_position_key',
+        columns: ['verseId', 'position'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'prayerLog',
+        constraint: 'prayerLog_userId_prayerDate_prayerName_key',
+        columns: ['userId', 'prayerDate', 'prayerName'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'prayerSchedule',
+        constraint: 'prayerSchedule_locationKey_prayerDate_prayerName_calculationMethodId_key',
+        columns: ['locationKey', 'prayerDate', 'prayerName', 'calculationMethodId'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'session',
+        constraint: 'session_token_key',
+        columns: ['token'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'user',
+        constraint: 'user_email_key',
+        columns: ['email'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'userLocationPreference',
+        constraint: 'userLocationPreference_userId_key',
+        columns: ['userId'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'userPreference',
+        constraint: 'userPreference_userId_key',
+        columns: ['userId'],
+      }),
+      this.addUnique({
+        schema: 'public',
+        table: 'userProfile',
+        constraint: 'userProfile_userId_key',
+        columns: ['userId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'account',
+        index: 'account_userId_idx_a489d58a',
+        columns: ['userId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'cityCatalog',
+        index: 'cityCatalog_name_idx_ce87e6ba',
+        columns: ['name'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'cityCatalog',
+        index: 'cityCatalog_province_idx_c35be1ce',
+        columns: ['province'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'journalAttachedVerse',
+        index: 'journalAttachedVerse_verseId_idx_7a94890a',
+        columns: ['verseId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'journalEntry',
+        index: 'journalEntry_themeId_idx_c1ca6728',
+        columns: ['themeId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'journalEntry',
+        index: 'journalEntry_userId_journalDate_idx_f0b0472f',
+        columns: ['userId', 'journalDate'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'journalPrayerReflection',
+        index: 'journalPrayerReflection_prayerLogId_idx_b5db581a',
+        columns: ['prayerLogId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'khazanahVerse',
+        index: 'khazanahVerse_categoryId_idx_15c304f2',
+        columns: ['categoryId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'khazanahVerse',
+        index: 'khazanahVerse_surahNumber_verseNumber_idx_8f1a7652',
+        columns: ['surahNumber', 'verseNumber'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'khazanahVerseSegment',
+        index: 'khazanahVerseSegment_verseId_idx_7a94890a',
+        columns: ['verseId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'prayerLog',
+        index: 'prayerLog_userId_prayerDate_idx_68114342',
+        columns: ['userId', 'prayerDate'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'prayerLog',
+        index: 'prayerLog_userId_status_idx_e4a128ba',
+        columns: ['userId', 'status'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'prayerSchedule',
+        index: 'prayerSchedule_calculationMethodId_idx_374b57c9',
+        columns: ['calculationMethodId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'prayerSchedule',
+        index: 'prayerSchedule_prayerDate_idx_329aa935',
+        columns: ['prayerDate'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'session',
+        index: 'session_userId_idx_a489d58a',
+        columns: ['userId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'userLocationPreference',
+        index: 'userLocationPreference_calculationMethodId_idx_374b57c9',
+        columns: ['calculationMethodId'],
+      }),
+      this.createIndex({
+        schema: 'public',
+        table: 'verification',
+        index: 'verification_identifier_idx_79a0dbb3',
+        columns: ['identifier'],
+      }),
+    ];
+  }
+}
+
+MigrationCLI.run(import.meta.url, M);

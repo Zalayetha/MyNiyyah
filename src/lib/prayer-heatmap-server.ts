@@ -1,19 +1,20 @@
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { pool } from "./db";
 import {
 	calculateDailyPrayerSchedule,
 	type DailyPrayerSchedule,
 } from "./prayer-calculation";
 import {
-	buildFeelingDistribution,
 	buildHeatmapMatrix,
-	type DonutFeelingSegment,
 	getHeatmapDayColumns,
 	type HeatmapDataResponse,
 	type PrayerHeatmapLog,
 } from "./prayer-heatmap";
+import { getCalculationMethodValues } from "./prayer-method-server";
+import { db } from "./prisma";
+import { parseIsoDate, parseTimezone } from "./server-validation";
 import { getCurrentSession } from "./session";
+import { calculateElapsedCompletionRate } from "./statistics";
 import {
 	formatLocalDate,
 	getTimezoneAbbreviation,
@@ -25,9 +26,9 @@ export interface PrayerHeatmapServerData extends HeatmapDataResponse {
 	timezoneAbbreviation: string;
 	totalPrayersPeriod: number;
 	completedPrayersPeriod: number;
-	feelingDistribution: DonutFeelingSegment[];
-	totalFeelingLogs: number;
 }
+
+import { setPrivateCacheControl } from "./cache";
 
 const DEFAULT_JAKARTA_PREF = {
 	cityId: "jkt",
@@ -43,9 +44,13 @@ const DEFAULT_JAKARTA_PREF = {
  * Server function to fetch prayer heatmap data across a rolling 7-day window.
  */
 export const getPrayerHeatmapData = createServerFn({ method: "GET" })
-	.validator(
-		(input: { clientLocalDate?: string; clientTimezone?: string }) => input,
-	)
+	.validator((input: { clientLocalDate?: string; clientTimezone?: string }) => {
+		if (input.clientLocalDate)
+			parseIsoDate(input.clientLocalDate, "clientLocalDate");
+		if (input.clientTimezone)
+			parseTimezone(input.clientTimezone, "clientTimezone");
+		return input;
+	})
 	.handler(async ({ data }): Promise<PrayerHeatmapServerData> => {
 		const session = await getCurrentSession();
 		if (!session?.user) {
@@ -56,17 +61,16 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 				},
 			});
 		}
+		setPrivateCacheControl();
 
 		const userId = session.user.id;
 		const clientTz = data?.clientTimezone?.trim() || "Asia/Jakarta";
 
 		// 1. Fetch user location preference
-		const prefResult = await pool.query(
-			`SELECT * FROM "userLocationPreference" WHERE "userId" = $1`,
-			[userId],
-		);
-
-		const pref = prefResult.rows[0] ?? DEFAULT_JAKARTA_PREF;
+		const pref =
+			(await db.orm.public.UserLocationPreference.where({ userId })
+				.select("latitude", "longitude", "timezone", "calculationMethodId")
+				.first()) ?? DEFAULT_JAKARTA_PREF;
 		const effectiveTimezone = pref.timezone || clientTz;
 		const offsetHours = getTimezoneOffsetHours(new Date(), effectiveTimezone);
 		const tzAbbr = getTimezoneAbbreviation(effectiveTimezone, offsetHours);
@@ -81,26 +85,31 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 		const endDate = days[days.length - 1].date;
 
 		// 3. Query prayer logs for the 7-day window
-		const logsResult = await pool.query(
-			`SELECT "prayerDate", "prayerName", "scheduledAt", "completedAt", status, feeling, "feelingScore", "khusyuScore"
-			 FROM "prayerLog"
-			 WHERE "userId" = $1 AND "prayerDate" >= $2 AND "prayerDate" <= $3`,
-			[userId, startDate, endDate],
-		);
+		const logRows = await db.orm.public.PrayerLog.where({ userId })
+			.where((log) => log.prayerDate.gte(startDate))
+			.where((log) => log.prayerDate.lte(endDate))
+			.select(
+				"prayerDate",
+				"prayerName",
+				"scheduledAt",
+				"completedAt",
+				"status",
+			)
+			.all();
 
-		const logs: PrayerHeatmapLog[] = logsResult.rows.map((row) => ({
+		const logs: PrayerHeatmapLog[] = logRows.map((row) => ({
 			prayerDate: row.prayerDate,
 			prayerName: row.prayerName,
 			scheduledAt: row.scheduledAt,
 			completedAt: row.completedAt,
 			status: row.status,
-			feeling: row.feeling,
-			feelingScore: row.feelingScore,
-			khusyuScore: row.khusyuScore,
 		}));
 
 		// 4. Calculate prayer schedules for each day in the window
 		const schedulesByDate: Record<string, DailyPrayerSchedule> = {};
+		const methodValues = await getCalculationMethodValues(
+			pref.calculationMethodId ?? "kemenag",
+		);
 		for (const day of days) {
 			try {
 				schedulesByDate[day.date] = calculateDailyPrayerSchedule(day.date, {
@@ -109,6 +118,7 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 					timezoneOffset: offsetHours,
 					timezone: effectiveTimezone,
 					calculationMethodId: pref.calculationMethodId ?? "kemenag",
+					methodValues,
 				});
 			} catch (error) {
 				console.error(
@@ -127,21 +137,29 @@ export const getPrayerHeatmapData = createServerFn({ method: "GET" })
 			referenceDate: new Date(),
 		});
 
-		const completedCount = logs.filter((l) => l.status === "completed").length;
-		const totalPrayersPeriod = days.length * 5;
-		const feelingDistribution = buildFeelingDistribution(logs);
-		const totalFeelingLogs = feelingDistribution.reduce(
-			(total, segment) => total + segment.value,
-			0,
+		const logsByPrayer = new Map(
+			logs.map((log) => [
+				`${log.prayerDate}:${log.prayerName.toLowerCase()}`,
+				log,
+			]),
 		);
-
+		const completionRate = calculateElapsedCompletionRate(
+			days.flatMap((day) =>
+				(schedulesByDate[day.date]?.items ?? []).map((item) => ({
+					scheduledAt: item.scheduledAt,
+					completedAt:
+						logsByPrayer.get(`${day.date}:${item.id}`)?.status === "completed"
+							? logsByPrayer.get(`${day.date}:${item.id}`)?.completedAt
+							: null,
+				})),
+			),
+			new Date(),
+		);
 		return {
 			...heatmap,
 			timezone: effectiveTimezone,
 			timezoneAbbreviation: tzAbbr,
-			totalPrayersPeriod,
-			completedPrayersPeriod: completedCount,
-			feelingDistribution,
-			totalFeelingLogs,
+			totalPrayersPeriod: completionRate.denominator,
+			completedPrayersPeriod: completionRate.numerator,
 		};
 	});

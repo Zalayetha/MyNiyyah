@@ -19,6 +19,17 @@ body {
 	margin: 0;
 }
 
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		scroll-behavior: auto !important;
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
 @theme inline {
 	--font-heading: var(--font-sans);
 	--font-sans: "Inter Variable", sans-serif;
@@ -108,6 +119,9 @@ body {
 	}
 	html {
 		@apply font-sans;
+	}
+	:focus-visible {
+		@apply outline-none ring-2 ring-ring/70 ring-offset-2 ring-offset-background;
 	}
 }
 

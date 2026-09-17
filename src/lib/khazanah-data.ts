@@ -13,6 +13,14 @@ export interface KhazanahVerse {
 	category: "hikmah-shalat" | "pekerjaan" | "pengembangan-diri";
 }
 
+export interface KhazanahSourceMetadata {
+	contentVersion: string;
+	sourceName: string;
+	translationEdition: string;
+	license: string;
+	verificationNote: string;
+}
+
 export interface KhazanahCategory {
 	id: string;
 	slug: string;
@@ -20,6 +28,23 @@ export interface KhazanahCategory {
 	subtitle: string;
 	verses: KhazanahVerse[];
 }
+
+export interface KhazanahAttachmentSnapshot {
+	verseId: string;
+	segmentId: string | null;
+	segmentIndex?: number;
+	surahRef: string;
+	quoteText: string;
+}
+
+export const KHAZANAH_SOURCE_METADATA: KhazanahSourceMetadata = {
+	contentVersion: "quran-id-v1",
+	sourceName: "Al-Qur'an dan Terjemahannya, Kementerian Agama RI",
+	translationEdition: "Terjemahan Bahasa Indonesia Kemenag RI",
+	license: "Digunakan sebagai kutipan terbatas untuk refleksi pribadi.",
+	verificationNote:
+		"Static v1 content is the canonical app source and the database seed is generated from this file.",
+};
 
 export const KHAZANAH_VERSES: KhazanahVerse[] = [
 	{
@@ -165,3 +190,69 @@ export const KHAZANAH_CATEGORIES: KhazanahCategory[] = [
 		verses: KHAZANAH_VERSES.filter((v) => v.category === "pengembangan-diri"),
 	},
 ];
+
+export function getKhazanahCategories() {
+	return KHAZANAH_CATEGORIES;
+}
+
+export function getKhazanahCategory(slug: string) {
+	return KHAZANAH_CATEGORIES.find((category) => category.slug === slug) ?? null;
+}
+
+export function getKhazanahVerse(id: string) {
+	return KHAZANAH_VERSES.find((verse) => verse.id === id) ?? null;
+}
+
+export function getKhazanahVerseSegments(verse: KhazanahVerse) {
+	return verse.segments?.length ? verse.segments : [verse.translation];
+}
+
+export function getKhazanahSegmentId(verseId: string, segmentIndex: number) {
+	return `${verseId}-${segmentIndex}`;
+}
+
+export function resolveKhazanahAttachment(
+	verseId: string,
+	segmentId?: string | null,
+): KhazanahAttachmentSnapshot | null {
+	const verse = getKhazanahVerse(verseId);
+	if (!verse) return null;
+	if (!segmentId) {
+		return {
+			verseId: verse.id,
+			segmentId: null,
+			surahRef: verse.reference,
+			quoteText: verse.translation,
+		};
+	}
+
+	const segments = getKhazanahVerseSegments(verse);
+	const prefix = `${verse.id}-`;
+	if (!segmentId.startsWith(prefix)) return null;
+	const segmentIndex = Number(segmentId.slice(prefix.length));
+	if (
+		!Number.isInteger(segmentIndex) ||
+		segmentIndex < 0 ||
+		segmentIndex >= segments.length
+	) {
+		return null;
+	}
+
+	return {
+		verseId: verse.id,
+		segmentId,
+		segmentIndex,
+		surahRef: verse.reference,
+		quoteText: segments[segmentIndex],
+	};
+}
+
+export function resolveKhazanahAttachmentBySegmentIndex(
+	verseId: string,
+	segmentIndex: number,
+) {
+	return resolveKhazanahAttachment(
+		verseId,
+		getKhazanahSegmentId(verseId, segmentIndex),
+	);
+}

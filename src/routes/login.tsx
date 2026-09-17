@@ -118,13 +118,9 @@ function LoginRoute() {
 				</form>
 
 				<p className="mt-6 text-center text-muted-foreground text-sm">
-					No account yet?{" "}
-					<Link
-						className="font-medium text-primary"
-						search={{ redirect: redirectTo }}
-						to="/register"
-					>
-						Create one
+					Need access?{" "}
+					<Link className="font-medium text-primary" to="/contact">
+						Contact support
 					</Link>
 				</p>
 			</section>

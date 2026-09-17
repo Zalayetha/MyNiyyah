@@ -64,7 +64,44 @@ const menu: Menu[] = [
 	},
 ];
 
-export function JournalSection() {
+export function JournalSection({
+	stats = {
+		journalEntries: 0,
+		attachedVerses: 0,
+		onTimePercentage: null,
+		khusyuPercentage: null,
+	},
+}: {
+	stats?: {
+		journalEntries: number;
+		attachedVerses: number;
+		onTimePercentage: number | null;
+		khusyuPercentage: number | null;
+	};
+}) {
+	const dynamicMenu = menu.map((item) => {
+		if (item.slug === "muhasabah")
+			return { ...item, content: String(stats.journalEntries) };
+		if (item.slug === "khazanah")
+			return { ...item, content: String(stats.attachedVerses) };
+		if (item.slug === "tepat-waktu")
+			return {
+				...item,
+				content:
+					stats.onTimePercentage === null
+						? "-"
+						: String(stats.onTimePercentage),
+			};
+		if (item.slug === "khusyu")
+			return {
+				...item,
+				content:
+					stats.khusyuPercentage === null
+						? "-"
+						: String(stats.khusyuPercentage),
+			};
+		return item;
+	});
 	return (
 		<div className="w-full pb-32">
 			<div className="font-semibold text-2xl text-foreground px-8 pt-8">
@@ -75,7 +112,7 @@ export function JournalSection() {
 			</div>
 
 			<div className="grid grid-cols-2 grid-rows-3 gap-4 px-8 py-8">
-				{menu.map((item) => (
+				{dynamicMenu.map((item) => (
 					<MenuCard
 						key={item.slug}
 						title={item.title}
