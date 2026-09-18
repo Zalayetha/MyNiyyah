@@ -110,5 +110,5 @@ jobs:
             pnpm db:seed
             pnpm db:verify
             pnpm build
-            pm2 reload ecosystem.config.cjs --only MyNiyyah --update-env
+            pm2 restart MyNiyyah --update-env
             curl --fail --silent --show-error --max-time 10 https://myniyyah.my.id/api/ready
