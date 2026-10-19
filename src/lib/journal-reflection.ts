@@ -117,6 +117,8 @@ function getFeelingByScore(score: number | null | undefined) {
 	return FEELING_OPTIONS[score - 1] ?? null;
 }
 
+export const DEFAULT_FEELING_INDEX = 2;
+
 export function getJournalDraftFeeling(
 	feelingIndex: number,
 ): JournalDraftFeeling {
@@ -127,6 +129,30 @@ export function getJournalDraftFeeling(
 		feelingLabel: option.label,
 		score: option.score,
 		khusyuScore: option.khusyuScore,
+	};
+}
+
+export function ensureDraftFeelings(
+	draft: JournalDraft,
+	prayerMetrics?: Partial<
+		Record<PrayerName, Pick<PrayerMetric, "feelingIndex">>
+	>,
+	defaultFeelingIndex = DEFAULT_FEELING_INDEX,
+): JournalDraft {
+	const feelings: Partial<Record<PrayerName, JournalDraftFeeling>> = {
+		...draft.feelings,
+	};
+	for (const prayerName of PRAYER_NAMES) {
+		if (!feelings[prayerName]) {
+			const metricIndex = prayerMetrics?.[prayerName]?.feelingIndex;
+			const feelingIndex =
+				typeof metricIndex === "number" ? metricIndex : defaultFeelingIndex;
+			feelings[prayerName] = getJournalDraftFeeling(feelingIndex);
+		}
+	}
+	return {
+		...draft,
+		feelings,
 	};
 }
 

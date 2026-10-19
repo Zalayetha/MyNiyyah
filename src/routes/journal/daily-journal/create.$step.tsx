@@ -32,6 +32,7 @@ import { Slider } from "#/components/ui/slider";
 import {
 	calculateJournalSummary,
 	createInitialJournalDraft,
+	ensureDraftFeelings,
 	FEELING_OPTIONS,
 	getJournalDraftFeeling,
 	getJournalDraftStorageKey,
@@ -372,7 +373,7 @@ function RouteComponent() {
 	}, [search?.verseId, search?.segmentId, search?.segmentIndex]);
 
 	const journalSummary = calculateJournalSummary(
-		draft.feelings,
+		ensureDraftFeelings(draft, journalData.prayerMetrics).feelings,
 		journalData.prayerMetrics,
 	);
 
@@ -424,12 +425,13 @@ function RouteComponent() {
 					>
 						{PRAYER_SUMMARIES.map(
 							({ prayerName, icon: PrayerIcon, colorClassName }) => {
-								const feelingIndex = draft.feelings[prayerName]?.feelingIndex;
-								const feelingLabel =
-									feelingIndex !== undefined
-										? FEELING_LABELS[feelingIndex]
-										: (journalData.prayerMetrics[prayerName].feelingLabel ??
-											"-");
+								const feeling =
+									draft.feelings[prayerName] ??
+									getJournalDraftFeeling(
+										journalData.prayerMetrics[prayerName]?.feelingIndex ??
+											DEFAULT_FEELING,
+									);
+								const feelingLabel = feeling.feelingLabel;
 
 								return (
 									<div
@@ -559,6 +561,24 @@ function RouteComponent() {
 						type="button"
 						className="gradient-secondary sticky bottom-4 mt-5 h-13 w-full font-semibold text-background tracking-wide shadow-xl shadow-background/40 hover:brightness-105"
 						onClick={() => {
+							const completeDraft = ensureDraftFeelings(
+								draft,
+								journalData.prayerMetrics,
+							);
+							setDraft(completeDraft);
+							if (typeof window !== "undefined") {
+								const key = getJournalDraftStorageKey(
+									initialData.draftScopeKey,
+									completeDraft.journalDate,
+								);
+								sessionStorage.setItem(
+									key,
+									serializeJournalDraft({
+										...completeDraft,
+										updatedAt: new Date().toISOString(),
+									}),
+								);
+							}
 							navigate({
 								to: "/journal/daily-journal/create/$step",
 								params: { step: "journal-2-summary" },
@@ -833,7 +853,11 @@ function RouteComponent() {
 								setIsSaving(true);
 								setSaveError(null);
 								try {
-									await saveJournalEntryAction({ data: draft });
+									const completeDraft = ensureDraftFeelings(
+										draft,
+										journalData.prayerMetrics,
+									);
+									await saveJournalEntryAction({ data: completeDraft });
 									if (typeof window !== "undefined") {
 										sessionStorage.removeItem(
 											getJournalDraftStorageKey(
@@ -1010,6 +1034,30 @@ function RouteComponent() {
 					type="button"
 					className="gradient-secondary sticky bottom-4 mt-5 h-13 w-full font-semibold text-background tracking-wide shadow-xl shadow-background/40 hover:brightness-105"
 					onClick={() => {
+						const committedFeeling =
+							draft.feelings[currentStep.prayerName] ??
+							getJournalDraftFeeling(currentFeeling);
+						const nextDraft: JournalDraft = {
+							...draft,
+							feelings: {
+								...draft.feelings,
+								[currentStep.prayerName]: committedFeeling,
+							},
+						};
+						setDraft(nextDraft);
+						if (typeof window !== "undefined") {
+							const key = getJournalDraftStorageKey(
+								initialData.draftScopeKey,
+								nextDraft.journalDate,
+							);
+							sessionStorage.setItem(
+								key,
+								serializeJournalDraft({
+									...nextDraft,
+									updatedAt: new Date().toISOString(),
+								}),
+							);
+						}
 						navigate({
 							to: "/journal/daily-journal/create/$step",
 							params: { step: currentStep.nextStep },

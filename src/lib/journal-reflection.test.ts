@@ -3,6 +3,8 @@ import {
 	calculateJournalSummary,
 	calculatePrayerMetrics,
 	createInitialJournalDraft,
+	DEFAULT_FEELING_INDEX,
+	ensureDraftFeelings,
 	getJournalDraftFeeling,
 	getJournalDraftStorageKey,
 	getJournalEligibility,
@@ -216,5 +218,25 @@ describe("journal reflection utilities", () => {
 
 		expect(isJournalDraftDirty(baseline, baseline)).toBe(false);
 		expect(isJournalDraftDirty(draft, baseline)).toBe(true);
+	});
+
+	it("ensures draft feelings are populated with inputted feelings or metrics/defaults", () => {
+		const draft = createInitialJournalDraft("2026-09-14");
+		// Shubuh was explicitly inputted by user
+		draft.feelings.subuh = getJournalDraftFeeling(3);
+
+		// Prayer metrics has feeling for zhuhur (from earlier prayer log)
+		const completedDraft = ensureDraftFeelings(draft, {
+			zhuhur: { feelingIndex: 1 },
+		});
+
+		expect(completedDraft.feelings.subuh?.feelingLabel).toBe("Khusyu'");
+		expect(completedDraft.feelings.zhuhur?.feelingLabel).toBe("Berat");
+		expect(completedDraft.feelings.ashar?.feelingLabel).toBe("Tenang");
+		expect(completedDraft.feelings.maghrib?.feelingLabel).toBe("Tenang");
+		expect(completedDraft.feelings.isya?.feelingLabel).toBe("Tenang");
+		expect(completedDraft.feelings.ashar?.feelingIndex).toBe(
+			DEFAULT_FEELING_INDEX,
+		);
 	});
 });
